@@ -19,7 +19,8 @@
 
 #define DELAY_VAL 3
 #define REGISTER_COUNT 5
-#define FULL_TURN_STEPS 2047
+#define FULL_STEP_CYCLE 2047
+#define HALF_STEP_CYCLE 4095
 
 void setup() {
   SPI.begin();
