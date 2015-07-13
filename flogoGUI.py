@@ -2,7 +2,8 @@ from Tkinter import *
 from utility import *
 import serial
 
-COM_PORT = 'COM6'
+#COM_PORT = 'COM6'
+COM_PORT = '/dev/ttyUSB4'
 GRID_COUNT = 25
 
 class App:
@@ -38,14 +39,20 @@ class App:
         self.isMouseDown = False        
 
         self.ser = None
-        #self.initialiseSerial()
+        self.initialiseSerial()
 
         self.eventLoop()
 ##        self.canvasLoop()
 
+    def initialiseSerial(self):
+        self.ser = serial.Serial(COM_PORT, 9600, timeout=0.01)
+
     def eventLoop(self):
         self.rotateTitle()
         self.root.after(100, self.eventLoop)
+        asd = self.ser.read()
+        if asd:
+            print asd
 
     def rotateTitle(self):
         rol = lambda l: l[1:] + l[:1]
@@ -78,8 +85,6 @@ class App:
                                                                             (j + 1) * g_height,
                                                                             fill='WHITE', width=1))
 
-    def initialiseSerial(self):
-        self.ser = serial.Serial(COM_PORT, 9600, timeout=0.01)
 
     def getGeometry(self, w, h):
         ws = self.root.winfo_screenwidth()
@@ -120,11 +125,13 @@ class App:
                 # transpose matrix
                 grids = zip(*grids)
                 print 'transposed'
-            msg_for_arduino = self.getMsgForArduino(grids)
-            print msg_for_arduino
-            print
 
-    def getMsgForArduino(self, grids, seperator='\n'):
+            self.ser.write('B')
+            for msg in self.getMsgForArduino(grids):
+                print msg
+                self.ser.write('S{}E'.format(msg))
+
+    def getMsgForArduino(self, grids, separator='\n'):
         step_list = []
         for row in range(GRID_COUNT):
             lhs = 0
@@ -145,9 +152,7 @@ class App:
                     lhs -= difference
                 else:
                     rhs -= difference
-            
-            step_list.append("-{:2}L{:2}R{:2}".format(row, lhs, rhs))
-        return seperator.join(step_list)
+            yield "-{:2}L{:2}R{:2}".format(row, lhs, rhs)
         
 root = Tk()
 app = App(root)
