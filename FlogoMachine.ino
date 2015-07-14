@@ -14,26 +14,32 @@
 #define DELAY_VAL 1
 #define GEAR_VAL 400
 #define REGISTER_COUNT 5
-#define STEPS_FOR_COMPLETE_SHUT1 4800
-#define STEPS_FOR_COMPLETE_SHUT2 5200
+#define STEPS_FOR_COMPLETE_SHUT1 800
+#define STEPS_FOR_COMPLETE_SHUT2 1200
+
+//#define DELAY_VAL 1
+//#define GEAR_VAL 50
+//#define REGISTER_COUNT 5
+//#define STEPS_FOR_COMPLETE_SHUT1 100
+//#define STEPS_FOR_COMPLETE_SHUT2 150
 
 class Motor {
 public:
     Motor() {};
-    Motor(const int steps) {target_steps = steps;};
+//    Motor(const int steps) {target_steps = steps;};
     int val = 0;
-    int steps_taken = 0;
-    int target_steps = 0;
+    unsigned long steps_taken = 0;
+    unsigned long target_steps = 0;
     int dir = 0;
 };
 
 class Register {
 public:
     Register() {};
-    Register(const int step1, const int step2) {
-        motor1 = Motor(step1);
-        motor2 = Motor(step2);
-    }
+//    Register(const int step1, const int step2) {
+//        motor1 = Motor(step1);
+//        motor2 = Motor(step2);
+//    }
     Motor motor1, motor2;
 };
 
@@ -43,8 +49,9 @@ public:
     void resetSteps();
     void populateRegister();
     void populateRegister(const int, const char*);
-    void populateRegisterForReset();
-    int getRemainingSteps();
+    void populateRegisterForClosing();
+    unsigned long getRemainingSteps();
+    unsigned long getRemainingStepsVerbose();
     void beginShutter();
     void closeShutter();
     void resetShutter();
@@ -77,7 +84,7 @@ void Shutter::populateRegister() {
         if (msg_buffer[0] == 'S' && msg_buffer[10] == 'E')
             Shutter::populateRegister(i, msg_buffer);
         else
-            Serial.print("error");
+            Serial.println("error");
     }
 }
 
@@ -87,15 +94,15 @@ void Shutter::populateRegister(const int register_index, const char* serial_msg)
     reg[register_index].motor2.target_steps = reg_info.substring(8, 10).toInt() * GEAR_VAL;
 }
 
-//void Shutter::populateRegisterForReset() {
-//    for (int i = 0; i != register_count; ++i) {
-//        reg[i].motor1.target_steps = STEPS_FOR_COMPLETE_SHUT1 - reg[i].motor1.target_steps;
-//        reg[i].motor2.target_steps = STEPS_FOR_COMPLETE_SHUT2 - reg[i].motor2.target_steps;
-//    }
-//}
+void Shutter::populateRegisterForClosing() {
+    for (int i = 0; i != register_count; ++i) {
+        reg[i].motor1.target_steps = STEPS_FOR_COMPLETE_SHUT1;
+        reg[i].motor2.target_steps = STEPS_FOR_COMPLETE_SHUT2;
+    }
+}
 
-int Shutter::getRemainingSteps() {
-    int steps = 0;
+unsigned long Shutter::getRemainingSteps() {
+    unsigned long steps = 0;
     for (int i = 0; i!= register_count; ++i) {
         steps += reg[i].motor1.target_steps - reg[i].motor1.steps_taken;
         steps += reg[i].motor2.target_steps - reg[i].motor2.steps_taken;
@@ -103,12 +110,28 @@ int Shutter::getRemainingSteps() {
     return steps;
 }
 
+unsigned long Shutter::getRemainingStepsVerbose() {
+    unsigned long steps = 0;
+    for (int i = 0; i!= register_count; ++i) {
+        steps += reg[i].motor1.target_steps - reg[i].motor1.steps_taken;
+        Serial.println("remaining steps:");
+        Serial.print("R");
+        Serial.println(i);
+        Serial.print("motor1: ");
+        Serial.println(reg[i].motor1.target_steps - reg[i].motor1.steps_taken);
+        steps += reg[i].motor2.target_steps - reg[i].motor2.steps_taken;
+        Serial.print("motor2: ");
+        Serial.println(reg[i].motor2.target_steps - reg[i].motor2.steps_taken);
+    }
+    return steps;
+}
+
 void Shutter::beginShutter() {
     resetSteps();
-    int remaining_steps = getRemainingSteps();
-//    Serial.print("S");
-//    Serial.print(remaining_steps);
-//    Serial.print("E");
+    unsigned long remaining_steps = getRemainingSteps();
+//    Serial.println("S");
+//    Serial.println(remaining_steps);
+//    Serial.println("E");
     for (int i = 0; i != register_count; ++i) {
         reg[i].motor1.dir = 1;
         reg[i].motor1.val = 1;
@@ -121,20 +144,20 @@ void Shutter::beginShutter() {
         ST_CP_low();
         for (int i = 0; i != register_count; ++i) {
             SPI.transfer(getRegisterValue(i));
-            //Serial.print(getRegisterValue(i)==B10001000);
+            //Serial.println(getRegisterValue(i)==B10001000);
             updateRegisterValue(i);
             delay(DELAY_VAL);
         ST_CP_high();
         }
         remaining_steps = getRemainingSteps();
-        //Serial.print("s");
-        //Serial.print(remaining_steps);
+        //Serial.println("s");
+        //Serial.println(remaining_steps);
     }
 }
 
 void Shutter::resetShutter() {
     resetSteps();
-    int remaining_steps = getRemainingSteps();
+    unsigned long remaining_steps = getRemainingSteps();
     for (int i = 0; i != register_count; ++i) {
         reg[i].motor1.dir = -1;
         reg[i].motor1.val = 1;
@@ -142,18 +165,44 @@ void Shutter::resetShutter() {
         reg[i].motor2.dir = -1;
         reg[i].motor2.val = 1;
     }
-     while (remaining_steps > 0) {
+    while (remaining_steps > 0) {
         ST_CP_low();
         for (int i = 0; i != register_count; ++i) {
             SPI.transfer(getRegisterValue(i));
-            //Serial.print(getRegisterValue(i)==B10001000);
+            //Serial.println(getRegisterValue(i)==B10001000);
             updateRegisterValue(i);
             delay(DELAY_VAL);
         ST_CP_high();
         }
         remaining_steps = getRemainingSteps();
-        //Serial.print("s");
-        //Serial.print(remaining_steps);
+        //Serial.println("s");
+        //Serial.println(remaining_steps);
+    }
+}
+
+void Shutter::closeShutter() {
+    populateRegisterForClosing();
+    unsigned long remaining_steps = getRemainingSteps();
+    //Serial.println(remaining_steps);
+    for (int i = 0; i != register_count; ++i) {
+        reg[i].motor1.dir = 1;
+        reg[i].motor1.val = reg[i].motor1.steps_taken < reg[i].motor1.target_steps ? 1 : 0;
+
+        reg[i].motor2.dir = 1;
+        reg[i].motor2.val = reg[i].motor2.steps_taken < reg[i].motor2.target_steps ? 1 : 0;
+    }
+    while (remaining_steps > 0) {
+        ST_CP_low();
+        for (int i = 0; i != register_count; ++i) {
+            SPI.transfer(getRegisterValue(i));
+            //Serial.println(getRegisterValue(i), BIN);
+            updateRegisterValue(i);
+            delay(DELAY_VAL);
+        ST_CP_high();
+        }
+        remaining_steps = getRemainingSteps();
+        //Serial.println("s");
+        //Serial.println(remaining_steps);
     }
 }
 
@@ -196,11 +245,11 @@ void loop() {
             
             shutter.populateRegister();
             shutter.beginShutter();
-            //shutter.closeShutter();
+            shutter.closeShutter();
             shutter.resetShutter();
             
             clearRegister(5);
-            Serial.print("done");
+            //Serial.println("done");
         }
     }
 }
