@@ -12,10 +12,15 @@
 #define ror(val, bits) ((val >> 1) | (val << (bits - 1))) & ((1 << bits) - 1)
 
 #define DELAY_VAL 1
-#define GEAR_VAL 400
 #define REGISTER_COUNT 5
-#define STEPS_FOR_COMPLETE_SHUT1 800
-#define STEPS_FOR_COMPLETE_SHUT2 1200
+#define GEAR_VAL 400
+#define MOTOR1_GRID_COUNT 2
+#define MOTOR2_GRID_COUNT 3
+#define STEPS_FOR_COMPLETE_SHUT1 GEAR_VAL * MOTOR1_GRID_COUNT
+#define STEPS_FOR_COMPLETE_SHUT2 GEAR_VAL * MOTOR2_GRID_COUNT
+
+// TODO:
+// make total steps positional.
 
 class Motor {
 public:
