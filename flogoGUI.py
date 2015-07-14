@@ -130,10 +130,11 @@ class App:
                 grids = zip(*grids)
                 print 'transposed'
 
-            self.ser.write('B')
-            for msg in self.getMsgForArduino(grids):
-                print msg
-                self.ser.write('S{}E'.format(msg))
+            if self.ser:
+                self.ser.write('B')
+                for msg in self.getMsgForArduino(grids):
+                    print msg
+                    self.ser.write('S{}E'.format(msg))
 
     def getMsgForArduino(self, grids, separator='\n'):
         step_list = []
