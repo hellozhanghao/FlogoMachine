@@ -47,12 +47,16 @@ class App:
     def initialiseSerial(self):
         self.ser = serial.Serial(COM_PORT, 9600, timeout=0.01)
 
+    def printMsgFromArduino(self):
+        if self.ser:
+            serial_msg = self.ser.readline()
+            if serial_msg:
+                print serial_msg
+
     def eventLoop(self):
         self.rotateTitle()
+        self.printMsgFromArduino()
         self.root.after(100, self.eventLoop)
-        asd = self.ser.readline()
-        if asd:
-            print asd
 
     def rotateTitle(self):
         rol = lambda l: l[1:] + l[:1]
