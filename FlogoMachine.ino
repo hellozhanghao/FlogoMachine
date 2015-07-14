@@ -29,7 +29,7 @@ public:
 class Register {
 public:
     Register() {};
-    Motor motor1, motor2;
+    Motor motor[2];
 };
 
 class Shutter {
@@ -62,8 +62,8 @@ Shutter::Shutter(const int reg_count) {
 
 void Shutter::resetSteps() {
     for (int i = 0; i != register_count; ++i) {
-        reg[i].motor1.steps_taken = 0;
-        reg[i].motor2.steps_taken = 0;
+        for (int j = 0; j != 2; ++j)
+            reg[i].motor[j].steps_taken = 0;
     }
 }
 
@@ -80,38 +80,44 @@ void Shutter::populateRegister() {
 
 void Shutter::populateRegister(const int register_index, const char* serial_msg) {
     String reg_info = String(serial_msg);
-    reg[register_index].motor1.target_steps = reg_info.substring(5, 7).toInt() * GEAR_VAL;
-    reg[register_index].motor2.target_steps = reg_info.substring(8, 10).toInt() * GEAR_VAL;
+    reg[register_index].motor[0].target_steps = reg_info.substring(5, 7).toInt() * GEAR_VAL;
+    reg[register_index].motor[1].target_steps = reg_info.substring(8, 10).toInt() * GEAR_VAL;
 }
 
 void Shutter::populateRegisterForClosing() {
     for (int i = 0; i != register_count; ++i) {
-        reg[i].motor1.target_steps = STEPS_FOR_COMPLETE_SHUT1;
-        reg[i].motor2.target_steps = STEPS_FOR_COMPLETE_SHUT2;
+        reg[i].motor[0].target_steps = STEPS_FOR_COMPLETE_SHUT1;
+        reg[i].motor[1].target_steps = STEPS_FOR_COMPLETE_SHUT2;
     }
 }
 
 unsigned long Shutter::getRemainingSteps() {
     unsigned long steps = 0;
     for (int i = 0; i!= register_count; ++i) {
-        steps += reg[i].motor1.target_steps - reg[i].motor1.steps_taken;
-        steps += reg[i].motor2.target_steps - reg[i].motor2.steps_taken;
+        for (int j = 0; j != 2; ++j)
+            steps += reg[i].motor[j].target_steps - reg[i].motor[j].steps_taken;
     }
     return steps;
 }
 
+
 unsigned long Shutter::getRemainingStepsVerbose() {
     unsigned long steps = 0;
     for (int i = 0; i!= register_count; ++i) {
-        steps += reg[i].motor1.target_steps - reg[i].motor1.steps_taken;
+
         Serial.println("remaining steps:");
         Serial.print("R");
         Serial.println(i);
-        Serial.print("motor1: ");
-        Serial.println(reg[i].motor1.target_steps - reg[i].motor1.steps_taken);
-        steps += reg[i].motor2.target_steps - reg[i].motor2.steps_taken;
-        Serial.print("motor2: ");
-        Serial.println(reg[i].motor2.target_steps - reg[i].motor2.steps_taken);
+
+        for (int j = 0; j != 2; ++j) {
+            steps += reg[i].motor[j].target_steps - reg[i].motor[j].steps_taken;
+
+            Serial.print("Motor");
+            Serial.print(j + 1);
+            Serial.print(": ");
+            Serial.println(reg[i].motor[j].target_steps - reg[i].motor[j].steps_taken);
+        }
+
     }
     return steps;
 }
@@ -134,11 +140,10 @@ void Shutter::moveMotor() {
 void Shutter::beginShutter() {
     resetSteps();
     for (int i = 0; i != register_count; ++i) {
-        reg[i].motor1.dir = 1;
-        reg[i].motor1.val = 1;
-
-        reg[i].motor2.dir = 1;
-        reg[i].motor2.val = 1;
+        for (int j = 0; j != 2; ++j) {
+            reg[i].motor[j].dir = 1;
+            reg[i].motor[j].val = 1;
+        }
     }
     moveMotor();
 }
@@ -147,11 +152,10 @@ void Shutter::resetShutter() {
     resetSteps();
     unsigned long remaining_steps = getRemainingSteps();
     for (int i = 0; i != register_count; ++i) {
-        reg[i].motor1.dir = -1;
-        reg[i].motor1.val = 1;
-
-        reg[i].motor2.dir = -1;
-        reg[i].motor2.val = 1;
+        for (int j = 0; j != 2; ++j) {
+            reg[i].motor[j].dir = -1;
+            reg[i].motor[j].val = 1;
+        }
     }
     moveMotor();
 }
@@ -160,35 +164,30 @@ void Shutter::closeShutter() {
     populateRegisterForClosing();
     unsigned long remaining_steps = getRemainingSteps();
     for (int i = 0; i != register_count; ++i) {
-        reg[i].motor1.dir = 1;
-        reg[i].motor1.val = reg[i].motor1.steps_taken < reg[i].motor1.target_steps ? 1 : 0;
-
-        reg[i].motor2.dir = 1;
-        reg[i].motor2.val = reg[i].motor2.steps_taken < reg[i].motor2.target_steps ? 1 : 0;
+        for (int j = 0; j != 2; ++j) {
+            reg[i].motor[j].dir = 1;
+            reg[i].motor[j].val = reg[i].motor[j].steps_taken < reg[i].motor[j].target_steps ? 1 : 0;
+        }
     }
     moveMotor();
 }
 
 int Shutter::getRegisterValue(const int reg_index) {
-    return (reg[reg_index].motor1.val << 4) + reg[reg_index].motor2.val;
+    return (reg[reg_index].motor[0].val << 4) + reg[reg_index].motor[1].val;
 }
 
 void Shutter::updateRegisterValue(const int reg_index) {
-    int* val1 = &reg[reg_index].motor1.val;
-    int* val2 = &reg[reg_index].motor2.val;
-    if (reg[reg_index].motor1.steps_taken < reg[reg_index].motor1.target_steps) {
-        *val1 = reg[reg_index].motor1.dir > 0 ? rol(*val1, 4) : ror(*val1, 4);
-        reg[reg_index].motor1.steps_taken++;
-    } else {
-        *val1 = 0;
+    for (int j = 0; j != 2; ++j) {
+        if (reg[reg_index].motor[j].steps_taken < reg[reg_index].motor[j].target_steps) {
+            if (reg[reg_index].motor[j].dir > 0)
+                rol(reg[reg_index].motor[j].val, 4);
+            else
+                ror(reg[reg_index].motor[j].val, 4);
+            reg[reg_index].motor[j].steps_taken++;
+        } else {
+            reg[reg_index].motor[j].val = 0;
+        }
     }
-    if (reg[reg_index].motor2.steps_taken < reg[reg_index].motor2.target_steps) {
-        *val2 = reg[reg_index].motor2.dir > 0 ? rol(*val2, 4) : ror(*val2, 4);
-        reg[reg_index].motor2.steps_taken++;
-    } else {
-        *val2 = 0;
-    }
-    
 }
 
 Shutter shutter(REGISTER_COUNT);
