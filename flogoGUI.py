@@ -44,7 +44,10 @@ class App:
         self.eventLoop()
 
     def initialiseSerial(self):
-        self.ser = serial.Serial(COM_PORT, 9600, timeout=0.01)
+        try:
+            self.ser = serial.Serial(COM_PORT, 9600, timeout=0.01)
+        except:
+            print "serial com port not established."
 
     def printMsgFromArduino(self):
         if self.ser:
