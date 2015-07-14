@@ -104,7 +104,7 @@ void Shutter::beginShutter() {
         ST_CP_low();
         for (int i = 0; i != register_count; ++i) {
             SPI.transfer(getRegisterValue(i));
-            //Serial.print(getRegisterValue(i)==B10001000);
+            Serial.print(getRegisterValue(i)==B10001000);
             updateRegisterValue(i);
             delay(DELAY_VAL);
         ST_CP_high();
@@ -120,23 +120,19 @@ int Shutter::getRegisterValue(const int reg_index) {
 }
 
 void Shutter::updateRegisterValue(const int reg_index) {
-//    int* val1 = &reg[reg_index].motor1.val;
-//    int* val2 = &reg[reg_index].motor2.val;
-//    *val1 = reg[reg_index].motor1.dir > 0 ? rol(*val1, 4) : ror(*val1, 4);
-//    *val2 = reg[reg_index].motor2.dir > 0 ? rol(*val2, 4) : ror(*val2, 4);
-//    reg[reg_index].motor1.val = reg[reg_index].motor1.dir > 0 ? rol(reg[reg_index].motor1.val, 4) : ror(reg[reg_index].motor1.val, 4);
-//    reg[reg_index].motor2.val = reg[reg_index].motor2.dir > 0 ? rol(reg[reg_index].motor2.val, 4) : ror(reg[reg_index].motor2.val, 4);
+    int* val1 = &reg[reg_index].motor1.val;
+    int* val2 = &reg[reg_index].motor2.val;
     if (reg[reg_index].motor1.steps_taken < reg[reg_index].motor1.target_steps) {
-        reg[reg_index].motor1.val = reg[reg_index].motor1.dir > 0 ? rol(reg[reg_index].motor1.val, 4) : ror(reg[reg_index].motor1.val, 4);
+        *val1 = reg[reg_index].motor1.dir > 0 ? rol(*val1, 4) : ror(*val1, 4);
         reg[reg_index].motor1.steps_taken++;
     } else {
-        reg[reg_index].motor1.val = 0;
+        *val1 = 0;
     }
     if (reg[reg_index].motor2.steps_taken < reg[reg_index].motor2.target_steps) {
-        reg[reg_index].motor2.val = reg[reg_index].motor2.dir > 0 ? rol(reg[reg_index].motor2.val, 4) : ror(reg[reg_index].motor2.val, 4);
+        *val2 = reg[reg_index].motor2.dir > 0 ? rol(*val2, 4) : ror(*val2, 4);
         reg[reg_index].motor2.steps_taken++;
     } else {
-        reg[reg_index].motor2.val = 0;
+        *val2 = 0;
     }
     
 }
