@@ -50,7 +50,7 @@ class App:
     def eventLoop(self):
         self.rotateTitle()
         self.root.after(100, self.eventLoop)
-        asd = self.ser.read()
+        asd = self.ser.readline()
         if asd:
             print asd
 
