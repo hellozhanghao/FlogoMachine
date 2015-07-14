@@ -18,10 +18,10 @@
 #define STEPS_FOR_COMPLETE_SHUT2 1200
 
 //#define DELAY_VAL 1
-//#define GEAR_VAL 50
+//#define GEAR_VAL 5
 //#define REGISTER_COUNT 5
-//#define STEPS_FOR_COMPLETE_SHUT1 100
-//#define STEPS_FOR_COMPLETE_SHUT2 150
+//#define STEPS_FOR_COMPLETE_SHUT1 10
+//#define STEPS_FOR_COMPLETE_SHUT2 15
 
 class Motor {
 public:
@@ -144,13 +144,14 @@ void Shutter::beginShutter() {
         ST_CP_low();
         for (int i = 0; i != register_count; ++i) {
             SPI.transfer(getRegisterValue(i));
-            //Serial.println(getRegisterValue(i)==B10001000);
+            //Serial.println(getRegisterValue(i), BIN);
             updateRegisterValue(i);
             delay(DELAY_VAL);
-        ST_CP_high();
         }
+        ST_CP_high();
+        //Serial.println("stored");
         remaining_steps = getRemainingSteps();
-        //Serial.println("s");
+        //Serial.println("remaining steps in beginShutter");
         //Serial.println(remaining_steps);
     }
 }
@@ -169,13 +170,13 @@ void Shutter::resetShutter() {
         ST_CP_low();
         for (int i = 0; i != register_count; ++i) {
             SPI.transfer(getRegisterValue(i));
-            //Serial.println(getRegisterValue(i)==B10001000);
+            //Serial.println(getRegisterValue(i), BIN);
             updateRegisterValue(i);
             delay(DELAY_VAL);
-        ST_CP_high();
         }
+        ST_CP_high();
         remaining_steps = getRemainingSteps();
-        //Serial.println("s");
+        //Serial.println("remaining steps in resetShutter");
         //Serial.println(remaining_steps);
     }
 }
@@ -198,10 +199,10 @@ void Shutter::closeShutter() {
             //Serial.println(getRegisterValue(i), BIN);
             updateRegisterValue(i);
             delay(DELAY_VAL);
-        ST_CP_high();
         }
+        ST_CP_high();
         remaining_steps = getRemainingSteps();
-        //Serial.println("s");
+        //Serial.println("remaining steps in closeShutter");
         //Serial.println(remaining_steps);
     }
 }
@@ -249,7 +250,7 @@ void loop() {
             shutter.resetShutter();
             
             clearRegister(5);
-            //Serial.println("done");
+            Serial.println("done");
         }
     }
 }
