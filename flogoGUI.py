@@ -4,7 +4,7 @@ import serial
 
 #COM_PORT = 'COM6'
 COM_PORT = '/dev/ttyUSB4'
-GRID_COUNT = 25
+GRID_COUNT = 5
 
 class App:
     width = 600
