@@ -42,7 +42,6 @@ class App:
         self.initialiseSerial()
 
         self.eventLoop()
-##        self.canvasLoop()
 
     def initialiseSerial(self):
         self.ser = serial.Serial(COM_PORT, 9600, timeout=0.01)
@@ -130,11 +129,10 @@ class App:
                 grids = zip(*grids)
                 print 'transposed'
 
-            if self.ser:
-                self.ser.write('B')
-                for msg in self.getMsgForArduino(grids):
-                    print msg
-                    self.ser.write('S{}E'.format(msg))
+            self.serialWrite('B')
+            for msg in self.getMsgForArduino(grids):
+                print msg
+                self.serialWrite('S{}E'.format(msg))
 
     def getMsgForArduino(self, grids, separator='\n'):
         step_list = []
@@ -158,6 +156,10 @@ class App:
                 else:
                     rhs -= difference
             yield "-{:2}L{:2}R{:2}".format(row, lhs, rhs)
+
+    def serialWrite(self, msg):
+        if self.ser:
+            self.ser.write(msg)
         
 root = Tk()
 app = App(root)
