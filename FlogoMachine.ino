@@ -11,11 +11,11 @@
 #define rol(val, bits) ((val << 1) | (val >> (bits - 1))) & ((1 << bits) - 1)
 #define ror(val, bits) ((val >> 1) | (val << (bits - 1))) & ((1 << bits) - 1)
 
-#define DELAY_VAL 5
-#define GEAR_VAL 5
-#define REGISTER_COUNT 25
-#define STEPS_FOR_COMPLETE_SHUT1 60
-#define STEPS_FOR_COMPLETE_SHUT2 65
+#define DELAY_VAL 1
+#define GEAR_VAL 400
+#define REGISTER_COUNT 5
+#define STEPS_FOR_COMPLETE_SHUT1 4800
+#define STEPS_FOR_COMPLETE_SHUT2 5200
 
 class Motor {
 public:
@@ -192,12 +192,22 @@ void setup() {
 void loop() {
     if (Serial.available() > 0) {
         if (Serial.read() == 'B') {
+            clearRegister(5);
+            
             shutter.populateRegister();
             shutter.beginShutter();
             //shutter.closeShutter();
             shutter.resetShutter();
+            
+            clearRegister(5);
             Serial.print("done");
         }
     }
 }
 
+void clearRegister(const int& register_count) {
+  for (int i = 0; i != register_count; ++i)
+    SPI.transfer(0);
+  ST_CP_low();
+  ST_CP_high();
+}
