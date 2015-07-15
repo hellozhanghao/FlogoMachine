@@ -149,12 +149,21 @@ unsigned long Shutter::getRemainingStepsVerbose() {
 void Shutter::beginShutter() {
     for (int i = 0; i != register_count; ++i) {
         for (int j = 0; j != 2; ++j) {
-            reg[i].motor[j].dir = 1;
-            reg[i].motor[j].val = 1;
+            if (reg[i].motor[j].target_position != reg[i].motor[j].current_position) {
+                reg[i].motor[j].dir = 1;
+                if (reg[i].motor[j].target_position < reg[i].motor[j].current_position) {
+                    reg[i].motor[j].dir = -1;
+                }
+                reg[i].motor[j].val = 1;
+            } else {
+                reg[i].motor[j].val = 0;
+            }
         }
     }
     Serial.println("beginShutter");
     moveMotor();
+    clearRegister(5);
+    Serial.println("ready");
 }
 
 void Shutter::resetShutter() {
@@ -168,6 +177,8 @@ void Shutter::resetShutter() {
     }
     Serial.println("resetShutter");
     moveMotor();
+    clearRegister(5);
+    Serial.println("ready");
 }
 
 void Shutter::closeShutter() {
@@ -181,6 +192,8 @@ void Shutter::closeShutter() {
     }
     Serial.println("closeShutter");
     moveMotor();
+    clearRegister(5);
+    Serial.println("ready");
 }
 
 void Shutter::moveMotor() {
@@ -224,20 +237,22 @@ void setup() {
     pinMode(SH_CP_PIN, OUTPUT);
     pinMode(ST_CP_PIN, OUTPUT);
     pinMode(DS_PIN, OUTPUT);
+    clearRegister(5);
+    Serial.println("ready");
 }
+
+char serial_read = '0';
 
 void loop() {
     if (Serial.available() > 0) {
-        if (Serial.read() == 'B') {
-            clearRegister(5);
-            
+        serial_read = Serial.read();
+        if (serial_read == 'B') {
             shutter.populateRegister();
             shutter.beginShutter();
-            shutter.closeShutter();
+        } else if (serial_read == 'O') {
             shutter.resetShutter();
-            
-            clearRegister(5);
-            Serial.println("done");
+        } else if (serial_read == 'C') {
+            shutter.closeShutter();
         }
     }
 }
