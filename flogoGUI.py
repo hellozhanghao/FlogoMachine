@@ -17,13 +17,19 @@ class App:
 
 
         self.print_btn = Button(self.root, text="Print!", command=self.printFoam)
-        self.print_btn.grid(row=0, column=0)
+        self.print_btn.grid(row=1, column=0)
 
-        self.reset_btn = Button(self.root, text="Reset", command=self.reset)
-        self.reset_btn.grid(row=1, column=0)
+        self.reset_btn = Button(self.root, text="Draw again", command=self.reset)
+        self.reset_btn.grid(row=2, column=0)
+
+        self.open_shutter_btn = Button(self.root, text="Open shutters", command=self.openShutter)
+        self.open_shutter_btn.grid(row=3, column=0)
+
+        self.close_shutter_btn = Button(self.root, text="Close shutters", command=self.closeShutter)
+        self.close_shutter_btn.grid(row=4, column=0)
 
         self.help_lbl = Label(self.root, text="Draw on the grids. Once it is a closed surface, press Print!", justify=CENTER, wraplength=80)
-        self.help_lbl.grid(row=2, column=0)
+        self.help_lbl.grid(row=0, column=0)
 
         self.canvas = Canvas(self.root,
                              width=self.width,
@@ -122,6 +128,20 @@ class App:
 
     def reset(self):
         self.createGrids(GRID_COUNT)
+
+    def openShutter(self):
+        if self.serial_msg == "ready":
+            self.serial_msg = None
+            self.serialWrite('O')
+        else:
+            print "Arduino is busy"
+
+    def closeShutter(self):
+        if self.serial_msg == "ready":
+            self.serial_msg = None
+            self.serialWrite('C')
+        else:
+            print "Arduino is busy"
 
     def printFoam(self):
         if not self.surface.isValidShape():
