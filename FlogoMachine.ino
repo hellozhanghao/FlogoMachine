@@ -18,6 +18,7 @@
 #define MOTOR2_GRID_COUNT 3
 #define STEPS_FOR_COMPLETE_SHUT1 GEAR_VAL * MOTOR1_GRID_COUNT
 #define STEPS_FOR_COMPLETE_SHUT2 GEAR_VAL * MOTOR2_GRID_COUNT
+#define CENTRE_POSITION(val) GEAR_VAL * ((REGISTER_COUNT / 2) + val)
 
 // TODO:
 // make total steps positional.
@@ -26,8 +27,8 @@ class Motor {
 public:
     Motor() {};
     int val = 0;
-    unsigned long steps_taken = 0;
-    unsigned long target_steps = 0;
+    unsigned long current_position = 0;
+    unsigned long target_position = 0;
     int dir = 0;
 };
 
@@ -44,6 +45,7 @@ public:
     void populateRegister();
     void populateRegister(const int, const char*);
     void populateRegisterForClosing();
+    void populateRegisterForReset();
     unsigned long getRemainingSteps();
     unsigned long getRemainingStepsVerbose();
     void moveMotor();
@@ -68,7 +70,7 @@ Shutter::Shutter(const int reg_count) {
 void Shutter::resetSteps() {
     for (int i = 0; i != register_count; ++i) {
         for (int j = 0; j != 2; ++j)
-            reg[i].motor[j].steps_taken = 0;
+            reg[i].motor[j].current_position = 0;
     }
 }
 
@@ -85,26 +87,43 @@ void Shutter::populateRegister() {
 
 void Shutter::populateRegister(const int register_index, const char* serial_msg) {
     String reg_info = String(serial_msg);
-    reg[register_index].motor[0].target_steps = reg_info.substring(5, 7).toInt() * GEAR_VAL;
-    reg[register_index].motor[1].target_steps = reg_info.substring(8, 10).toInt() * GEAR_VAL;
+    reg[register_index].motor[0].target_position = reg_info.substring(5, 7).toInt() * GEAR_VAL;
+    reg[register_index].motor[1].target_position = reg_info.substring(8, 10).toInt() * GEAR_VAL;
 }
 
 void Shutter::populateRegisterForClosing() {
+    // It is possible that one side of the strip may be further in than the other.
+    // In that case, we'll probably just want to close in the strip that is further away.
     for (int i = 0; i != register_count; ++i) {
-        reg[i].motor[0].target_steps = STEPS_FOR_COMPLETE_SHUT1;
-        reg[i].motor[1].target_steps = STEPS_FOR_COMPLETE_SHUT2;
+        int moving_strip = 0, stationary_strip = -1;
+        if (reg[i].motor[0].target_position >= CENTRE_POSITION(0) || reg[i].motor[1].target_position >= CENTRE_POSITION(1)) {
+            // center_pos may be different in odd numbered sides
+            moving_strip = reg[i].motor[0].target_position >= CENTRE_POSITION(0) ? 1 : 0;
+            stationary_strip = !moving_strip;
+        }
+        // (moving_strip * GEAR_VAL): fix for odd numbered sides
+        reg[i].motor[moving_strip].target_position = CENTRE_POSITION(0) + (moving_strip * GEAR_VAL);
+
+        if (stationary_strip == -1)
+            reg[i].motor[!moving_strip].target_position = CENTRE_POSITION(0) + (!moving_strip * GEAR_VAL);
     }
 }
+
+void Shutter::populateRegisterForReset() {
+    for (int i = 0; i != register_count; ++i) {
+        for (int j = 0; j != 2; ++j) 
+            reg[i].motor[j].target_position = 0;
+    }
+}    
 
 unsigned long Shutter::getRemainingSteps() {
     unsigned long steps = 0;
     for (int i = 0; i!= register_count; ++i) {
         for (int j = 0; j != 2; ++j)
-            steps += reg[i].motor[j].target_steps - reg[i].motor[j].steps_taken;
+            steps += abs(reg[i].motor[j].target_position - reg[i].motor[j].current_position);
     }
     return steps;
 }
-
 
 unsigned long Shutter::getRemainingStepsVerbose() {
     unsigned long steps = 0;
@@ -115,16 +134,53 @@ unsigned long Shutter::getRemainingStepsVerbose() {
         Serial.println(i);
 
         for (int j = 0; j != 2; ++j) {
-            steps += reg[i].motor[j].target_steps - reg[i].motor[j].steps_taken;
+            steps += abs(reg[i].motor[j].target_position - reg[i].motor[j].current_position);
 
             Serial.print("Motor");
             Serial.print(j + 1);
             Serial.print(": ");
-            Serial.println(reg[i].motor[j].target_steps - reg[i].motor[j].steps_taken);
+            Serial.println(abs(reg[i].motor[j].target_position - reg[i].motor[j].current_position));
         }
 
     }
     return steps;
+}
+
+void Shutter::beginShutter() {
+    for (int i = 0; i != register_count; ++i) {
+        for (int j = 0; j != 2; ++j) {
+            reg[i].motor[j].dir = 1;
+            reg[i].motor[j].val = 1;
+        }
+    }
+    Serial.println("beginShutter");
+    moveMotor();
+}
+
+void Shutter::resetShutter() {
+    populateRegisterForReset();
+    unsigned long remaining_steps = getRemainingSteps();
+    for (int i = 0; i != register_count; ++i) {
+        for (int j = 0; j != 2; ++j) {
+            reg[i].motor[j].dir = -1;
+            reg[i].motor[j].val = 1;
+        }
+    }
+    Serial.println("resetShutter");
+    moveMotor();
+}
+
+void Shutter::closeShutter() {
+    populateRegisterForClosing();
+    unsigned long remaining_steps = getRemainingSteps();
+    for (int i = 0; i != register_count; ++i) {
+        for (int j = 0; j != 2; ++j) {
+            reg[i].motor[j].dir = 1;
+            reg[i].motor[j].val = reg[i].motor[j].current_position != reg[i].motor[j].target_position ? 1 : 0;
+        }
+    }
+    Serial.println("closeShutter");
+    moveMotor();
 }
 
 void Shutter::moveMotor() {
@@ -142,53 +198,18 @@ void Shutter::moveMotor() {
     }
 }
 
-void Shutter::beginShutter() {
-    resetSteps();
-    for (int i = 0; i != register_count; ++i) {
-        for (int j = 0; j != 2; ++j) {
-            reg[i].motor[j].dir = 1;
-            reg[i].motor[j].val = 1;
-        }
-    }
-    moveMotor();
-}
-
-void Shutter::resetShutter() {
-    resetSteps();
-    unsigned long remaining_steps = getRemainingSteps();
-    for (int i = 0; i != register_count; ++i) {
-        for (int j = 0; j != 2; ++j) {
-            reg[i].motor[j].dir = -1;
-            reg[i].motor[j].val = 1;
-        }
-    }
-    moveMotor();
-}
-
-void Shutter::closeShutter() {
-    populateRegisterForClosing();
-    unsigned long remaining_steps = getRemainingSteps();
-    for (int i = 0; i != register_count; ++i) {
-        for (int j = 0; j != 2; ++j) {
-            reg[i].motor[j].dir = 1;
-            reg[i].motor[j].val = reg[i].motor[j].steps_taken < reg[i].motor[j].target_steps ? 1 : 0;
-        }
-    }
-    moveMotor();
-}
-
 int Shutter::getRegisterValue(const int reg_index) {
     return (reg[reg_index].motor[0].val << 4) + reg[reg_index].motor[1].val;
 }
 
 void Shutter::updateRegisterValue(const int reg_index) {
     for (int j = 0; j != 2; ++j) {
-        if (reg[reg_index].motor[j].steps_taken < reg[reg_index].motor[j].target_steps) {
+        if (reg[reg_index].motor[j].current_position != reg[reg_index].motor[j].target_position) {
             if (reg[reg_index].motor[j].dir > 0)
-                rol(reg[reg_index].motor[j].val, 4);
+                reg[reg_index].motor[j].val = rol(reg[reg_index].motor[j].val, 4);
             else
-                ror(reg[reg_index].motor[j].val, 4);
-            reg[reg_index].motor[j].steps_taken++;
+                reg[reg_index].motor[j].val = ror(reg[reg_index].motor[j].val, 4);
+            reg[reg_index].motor[j].current_position += reg[reg_index].motor[j].dir;
         } else {
             reg[reg_index].motor[j].val = 0;
         }
