@@ -39,6 +39,7 @@ class App:
         self.isMouseDown = False        
 
         self.ser = None
+        self.serial_msg = None
         self.initialiseSerial()
 
         self.eventLoop()
@@ -51,9 +52,10 @@ class App:
 
     def printMsgFromArduino(self):
         if self.ser:
-            serial_msg = self.ser.readline()
+            serial_msg = self.ser.readline().strip()
             if serial_msg:
-                print serial_msg
+                self.serial_msg = serial_msg
+                print self.serial_msg
 
     def eventLoop(self):
         self.rotateTitle()
@@ -132,10 +134,14 @@ class App:
                 grids = zip(*grids)
                 print 'transposed'
 
-            self.serialWrite('B')
-            for msg in self.getMsgForArduino(grids):
-                print msg
-                self.serialWrite('S{}E'.format(msg))
+            if self.serial_msg == "ready":
+                self.serial_msg = None
+                self.serialWrite('B')
+                for msg in self.getMsgForArduino(grids):
+                    print msg
+                    self.serialWrite('S{}E'.format(msg))
+            else:
+                print "Arduino is busy"
 
     def getMsgForArduino(self, grids, separator='\n'):
         step_list = []
