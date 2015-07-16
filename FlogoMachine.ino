@@ -54,11 +54,13 @@ public:
     void resetShutter();
     int getRegisterValue(const int);
     void updateRegisterValue(const int);
+    bool isReady();
 
 private:
 
     int register_count = 0;
     Register* reg;
+    bool is_ready = true;
 };
 
 
@@ -147,6 +149,7 @@ unsigned long Shutter::getRemainingStepsVerbose() {
 }
 
 void Shutter::beginShutter() {
+    is_ready = false;
     for (int i = 0; i != register_count; ++i) {
         for (int j = 0; j != 2; ++j) {
             if (reg[i].motor[j].target_position != reg[i].motor[j].current_position) {
@@ -163,10 +166,12 @@ void Shutter::beginShutter() {
     Serial.println("beginShutter");
     moveMotor();
     clearRegister(5);
+    is_ready = true;
     Serial.println("ready");
 }
 
 void Shutter::resetShutter() {
+    is_ready = false;
     populateRegisterForReset();
     unsigned long remaining_steps = getRemainingSteps();
     for (int i = 0; i != register_count; ++i) {
@@ -178,10 +183,12 @@ void Shutter::resetShutter() {
     Serial.println("resetShutter");
     moveMotor();
     clearRegister(5);
+    is_ready = true;
     Serial.println("ready");
 }
 
 void Shutter::closeShutter() {
+    is_ready = false;
     populateRegisterForClosing();
     unsigned long remaining_steps = getRemainingSteps();
     for (int i = 0; i != register_count; ++i) {
@@ -193,6 +200,7 @@ void Shutter::closeShutter() {
     Serial.println("closeShutter");
     moveMotor();
     clearRegister(5);
+    is_ready = true;
     Serial.println("ready");
 }
 
@@ -229,6 +237,10 @@ void Shutter::updateRegisterValue(const int reg_index) {
     }
 }
 
+bool Shutter::isReady() {
+    return is_ready;
+}
+
 Shutter shutter(REGISTER_COUNT);
 
 void setup() {
@@ -253,6 +265,9 @@ void loop() {
             shutter.resetShutter();
         } else if (serial_read == 'C') {
             shutter.closeShutter();
+        } else if (serial_read == 'R') {
+            if (shutter.isReady())
+                Serial.println("ready");
         }
     }
 }
