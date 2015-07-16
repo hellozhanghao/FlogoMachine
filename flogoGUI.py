@@ -53,6 +53,7 @@ class App:
     def initialiseSerial(self):
         try:
             self.ser = serial.Serial(COM_PORT, 9600, timeout=0.01)
+            self.probeArduino()
         except:
             print "serial com port not established."
 
@@ -189,6 +190,9 @@ class App:
     def serialWrite(self, msg):
         if self.ser:
             self.ser.write(msg)
+
+    def probeArduino(self):
+        self.serialWrite('R')
         
 root = Tk()
 app = App(root)
