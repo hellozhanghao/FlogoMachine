@@ -131,18 +131,25 @@ class App:
         self.createGrids(GRID_COUNT)
 
     def openShutter(self):
-        if self.serial_msg == "ready":
-            self.serial_msg = None
-            self.serialWrite('O')
+        if self.ser is not None:
+            if self.serial_msg == "ready":
+                self.serial_msg = None
+                self.serialWrite('O')
+            else:
+                print "Arduino is busy"
         else:
-            print "Arduino is busy"
+            print "Arduino is not connected"
+
 
     def closeShutter(self):
-        if self.serial_msg == "ready":
-            self.serial_msg = None
-            self.serialWrite('C')
+        if self.ser is not None:
+            if self.serial_msg == "ready":
+                self.serial_msg = None
+                self.serialWrite('C')
+            else:
+                print "Arduino is busy"
         else:
-            print "Arduino is busy"
+            print "Arduino is not connected"
 
     def printFoam(self):
         if not self.surface.isValidShape():
@@ -162,7 +169,12 @@ class App:
                     print msg
                     self.serialWrite('S{}E'.format(msg))
             else:
-                print "Arduino is busy"
+                if self.ser is None:
+                    print "Arduino is not connected, but here's the output anyway:"
+                    for msg in self.getMsgForArduino(grids):
+                        print msg
+                else:
+                    print "Arduino is busy"
 
     def getMsgForArduino(self, grids, separator='\n'):
         step_list = []
