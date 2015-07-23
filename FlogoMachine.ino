@@ -227,9 +227,9 @@ void Shutter::updateRegisterValue(const int reg_index) {
     for (int j = 0; j != 2; ++j) {
         if (reg[reg_index].motor[j].current_position != reg[reg_index].motor[j].target_position) {
             if (reg[reg_index].motor[j].dir > 0)
-                reg[reg_index].motor[j].val = rol(reg[reg_index].motor[j].val, 4);
-            else
                 reg[reg_index].motor[j].val = ror(reg[reg_index].motor[j].val, 4);
+            else
+                reg[reg_index].motor[j].val = rol(reg[reg_index].motor[j].val, 4);
             reg[reg_index].motor[j].current_position += reg[reg_index].motor[j].dir;
         } else {
             reg[reg_index].motor[j].val = 0;
