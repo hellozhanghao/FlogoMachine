@@ -131,6 +131,41 @@ class Surface:
         setComplementGrid((0, 0), complement)
         return complement
 
+    def getFirstPrintableGrid(self):
+        first_printable_grid = None
+        for grid in self.grid_map.allGrids():
+            if grid.isPrintable():
+                first_printable_grid = grid.gridCoord()
+                break
+        return first_printable_grid
+
+    def getFillSurface(self, grid, visited):
+        pass
+
+    def getFirstFilledSurface(self):
+        # find first printable grid
+        # recursively find all printable grid next to it
+        # return all found grid
+        first_printable_grid = self.getFirstPrintableGrid()
+        filled_surface = []
+
+        if first_printable_grid is not None:
+            self.getFillSurface(first_printable_grid, filled_surface)
+
+        return filled_surface
+
+    def hasOnlyOneFilledSurface(self):
+
+        # loop through every grid
+        # check if any grid is not in getFirstFilledSurface
+        # return false if found, else true
+        filled_surface = self.getFirstFilledSurface()
+        for grid in self.grid_map.allGrids():
+            if grid.gridCoord() not in filled_surface:
+                return False
+            
+        return True
+
     def fillSurface(self):
         for grid_coord in self.complement_grids:
             self.grid_map.grid(*grid_coord).complement()
