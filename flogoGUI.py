@@ -157,6 +157,7 @@ class App:
         else:
             self.surface.fillSurface()
             for filled_grid in self.surface.getFirstFilledSurface(): print "filled grid:", filled_grid
+            print "only one filled surface:", self.surface.hasOnlyOneFilledSurface()
             grids = self.grid_map.grids
             if not self.surface.isHorizontallyConvexedSurface():
                 # transpose matrix
