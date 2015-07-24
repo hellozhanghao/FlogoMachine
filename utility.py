@@ -1,3 +1,5 @@
+# TODO: 
+# convexity check should use non-filled grids instead of complement grids
 class Grid:
     def __init__(self, grid_coord, grid_count):
         self.grid_coord = grid_coord
@@ -132,6 +134,7 @@ class Surface:
         return complement
 
     def getFirstPrintableGrid(self):
+        # done
         first_printable_grid = None
         for grid in self.grid_map.allGrids():
             if grid.isPrintable():
@@ -140,9 +143,15 @@ class Surface:
         return first_printable_grid
 
     def getFillSurface(self, grid, visited):
-        pass
+        # done
+        visited.append(grid)
+        for surr_grid in self.grid_map.grid(*grid).surroundingGrids():
+            if self.grid_map.grid(*surr_grid).isPrintable():
+                if surr_grid not in visited:
+                    self.getFillSurface(surr_grid, visited)
 
     def getFirstFilledSurface(self):
+        # done
         # find first printable grid
         # recursively find all printable grid next to it
         # return all found grid
@@ -155,13 +164,15 @@ class Surface:
         return filled_surface
 
     def hasOnlyOneFilledSurface(self):
-
-        # loop through every grid
+        # done
+        # loop through every printable grid
         # check if any grid is not in getFirstFilledSurface
         # return false if found, else true
         filled_surface = self.getFirstFilledSurface()
+        if not filled_surface: return False # no filled surface
+
         for grid in self.grid_map.allGrids():
-            if grid.gridCoord() not in filled_surface:
+            if grid.isPrintable() and grid.gridCoord() not in filled_surface:
                 return False
             
         return True
