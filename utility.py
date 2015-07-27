@@ -1,3 +1,5 @@
+# TODO: 
+# convexity check should use non-filled grids instead of complement grids
 class Grid:
     def __init__(self, grid_coord, grid_count):
         self.grid_coord = grid_coord
@@ -88,21 +90,15 @@ class Surface:
                len(self.complement_grids) + len(self.grid_map.occupiedGrids())
 
     def isVerticallyConvexedSurface(self):
-#        print "in isVerticallyConvexedSurface()"
-#        for grid in self.complement_grids: print grid
-        for grid in self.complement_grids:
+        for grid in self.getNonePrintableGrid():
             x, y = grid
             #print "complement grid coord({},{}): ".format(x, y)
             top_clear = True
             for y_coord in xrange(y - 1, -1, -1):
-#                print "grid coord({},{}): state({}), is printable({})".format(x, y_coord, self.grid_map.grid(x, y_coord).state, 
-#                        self.grid_map.grid(x, y_coord).isPrintable())
                 if self.grid_map.grid(x, y_coord).isPrintable():
                     top_clear = False
                     break
             for y_coord in xrange(y + 1, self.grid_map.grid_count):
-#                print "grid coord({},{}): state({}), is printable({})".format(x, y_coord, self.grid_map.grid(x, y_coord).state, 
-#                        self.grid_map.grid(x, y_coord).isPrintable())
                 if self.grid_map.grid(x, y_coord).isPrintable():
                     if not top_clear: return False
 
@@ -110,25 +106,25 @@ class Surface:
         return True         
 
     def isHorizontallyConvexedSurface(self):
-        #print "in isHorizontallyConvexedSurface()"
-        for grid in self.complement_grids:
+        for grid in self.getNonePrintableGrid():
             x, y = grid
             #print "complement grid coord({},{}): ".format(x, y)
             left_clear = True
             for x_coord in xrange(x - 1, -1, -1):
-#                print "grid coord({},{}): state({}), is printable({})".format(x_coord, y, self.grid_map.grid(x_coord, y).state, 
-#                        self.grid_map.grid(x_coord, y).isPrintable())
                 if self.grid_map.grid(x_coord, y).isPrintable():
                     left_clear = False
                     break
             for x_coord in xrange(x + 1, self.grid_map.grid_count):
- #               print "grid coord({},{}): state({}), is printable({})".format(x_coord, y, self.grid_map.grid(x_coord, y).state, 
- #                       self.grid_map.grid(x_coord, y).isPrintable())
                 if self.grid_map.grid(x_coord, y).isPrintable():
                     if not left_clear: return False
 
         print "horizontally convexed"
         return True         
+
+    def getNonePrintableGrid(self):
+        for grid in self.grid_map.allGrids():
+            if not grid.isPrintable():
+                yield grid.gridCoord()
 
     def getComplementGrid(self):
         complement = []
@@ -143,6 +139,50 @@ class Surface:
         # assuming that first coord will always be non occupied
         setComplementGrid((0, 0), complement)
         return complement
+
+    def getFirstPrintableGrid(self):
+        # done
+        first_printable_grid = None
+        for grid in self.grid_map.allGrids():
+            if grid.isPrintable():
+                first_printable_grid = grid.gridCoord()
+                break
+        return first_printable_grid
+
+    def getFillSurface(self, grid, visited):
+        # done
+        visited.append(grid)
+        for surr_grid in self.grid_map.grid(*grid).surroundingGrids():
+            if self.grid_map.grid(*surr_grid).isPrintable():
+                if surr_grid not in visited:
+                    self.getFillSurface(surr_grid, visited)
+
+    def getFirstFilledSurface(self):
+        # done
+        # find first printable grid
+        # recursively find all printable grid next to it
+        # return all found grid
+        first_printable_grid = self.getFirstPrintableGrid()
+        filled_surface = []
+
+        if first_printable_grid is not None:
+            self.getFillSurface(first_printable_grid, filled_surface)
+
+        return filled_surface
+
+    def hasOnlyOneFilledSurface(self):
+        # done
+        # loop through every printable grid
+        # check if any grid is not in getFirstFilledSurface
+        # return false if found, else true
+        filled_surface = self.getFirstFilledSurface()
+        if not filled_surface: return False # no filled surface
+
+        for grid in self.grid_map.allGrids():
+            if grid.isPrintable() and grid.gridCoord() not in filled_surface:
+                return False
+            
+        return True
 
     def fillSurface(self):
         for grid_coord in self.complement_grids:
