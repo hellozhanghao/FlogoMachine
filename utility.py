@@ -99,8 +99,6 @@ class Surface:
             for y_coord in xrange(y + 1, self.grid_map.grid_count):
                 if self.grid_map.grid(x, y_coord).isPrintable():
                     if not top_clear: return False
-
-        print "vertically convexed"
         return True         
 
     def isHorizontallyConvexedSurface(self):
@@ -115,8 +113,6 @@ class Surface:
             for x_coord in xrange(x + 1, self.grid_map.grid_count):
                 if self.grid_map.grid(x_coord, y).isPrintable():
                     if not left_clear: return False
-
-        print "horizontally convexed"
         return True         
 
     def getNonePrintableGrid(self):
@@ -185,7 +181,6 @@ class Surface:
     def fillSurface(self):
         for grid_coord in self.complement_grids:
             self.grid_map.grid(*grid_coord).complement()
-            print "grid({},{}) complemented".format(*grid_coord)
             
 ###### test ####
 ##a= GridMap(5,5)
