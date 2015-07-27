@@ -1,5 +1,3 @@
-# TODO: 
-# convexity check should use non-filled grids instead of complement grids
 class Grid:
     def __init__(self, grid_coord, grid_count):
         self.grid_coord = grid_coord
