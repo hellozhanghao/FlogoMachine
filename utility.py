@@ -78,11 +78,9 @@ class Surface:
         self.grid_map = grid_map
         self.complement_grids = self.getComplementGrid()
         self.is_closed = self.isClosedSurface()
-        self.is_vertically_convexed = self.isVerticallyConvexedSurface()
-        self.is_horizontally_convexed = self.isHorizontallyConvexedSurface()
 
     def isValidShape(self):
-        return self.is_vertically_convexed or self.is_horizontally_convexed
+        return self.isVerticallyConvexedSurface() or self.isHorizontallyConvexedSurface()
 
     def isClosedSurface(self):
         total_grid_count = self.grid_map.grid_count**2
@@ -92,32 +90,37 @@ class Surface:
                len(self.complement_grids) + len(self.grid_map.occupiedGrids())
 
     def isVerticallyConvexedSurface(self):
-        for grid in self.complement_grids:
+        for grid in self.getNonePrintableGrid():
             x, y = grid
             top_clear = True
             for y_coord in xrange(y - 1, -1, -1):
-                if self.grid_map.grid(x, y_coord).isOccupied():
+                if self.grid_map.grid(x, y_coord).isPrintable():
                     top_clear = False
                     break
             for y_coord in xrange(y + 1, self.grid_map.grid_count):
-                if self.grid_map.grid(x, y_coord).isOccupied():
+                if self.grid_map.grid(x, y_coord).isPrintable():
                     if not top_clear: return False
 
         return True         
 
     def isHorizontallyConvexedSurface(self):
-        for grid in self.complement_grids:
+        for grid in self.getNonePrintableGrid():
             x, y = grid
             left_clear = True
             for x_coord in xrange(x - 1, -1, -1):
-                if self.grid_map.grid(x_coord, y).isOccupied():
+                if self.grid_map.grid(x_coord, y).isPrintable():
                     left_clear = False
                     break
             for x_coord in xrange(x + 1, self.grid_map.grid_count):
-                if self.grid_map.grid(x_coord, y).isOccupied():
+                if self.grid_map.grid(x_coord, y).isPrintable():
                     if not left_clear: return False
 
         return True         
+
+    def getNonePrintableGrid(self):
+        for grid in self.grid_map.allGrids():
+            if not grid.isPrintable():
+                yield grid.gridCoord()
 
     def getComplementGrid(self):
         complement = []
