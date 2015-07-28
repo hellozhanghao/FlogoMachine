@@ -160,11 +160,7 @@ class App:
         if not self.surface.isValidShape():
             print "Invalid shape"
         else:
-            grids = self.grid_map.grids
-            if not self.surface.isHorizontallyConvexedSurface():
-                # transpose matrix
-                grids = zip(*grids)
-                print 'transposed'
+            grids = self.surface.getGridForPrinting()
 
             if self.serial_msg == "ready":
                 self.serial_msg = None
