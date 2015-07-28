@@ -3,14 +3,16 @@
 from Tkinter import *
 from utility import *
 import serial
+import sys
 
 #COM_PORT = 'COM6'
 COM_PORT = '/dev/ttyUSB4'
 GRID_COUNT = 32
+sys.setrecursionlimit(3500)
 
 class App:
-    width = 600
-    height = 600
+    width = 800
+    height = 800
     title_text = "{}Floating Logo!{}".format(45 * ' ', 45 * ' ')
     def __init__(self, root):
         self.root = root
@@ -154,10 +156,10 @@ class App:
             print "Arduino is not connected"
 
     def printFoam(self):
+        self.surface.fillSurface()
         if not self.surface.isValidShape():
             print "Invalid shape"
         else:
-            self.surface.fillSurface()
             grids = self.grid_map.grids
             if not self.surface.isHorizontallyConvexedSurface():
                 # transpose matrix
