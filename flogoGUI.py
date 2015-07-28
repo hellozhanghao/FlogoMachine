@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+
 from Tkinter import *
 from utility import *
 import serial
 
 #COM_PORT = 'COM6'
 COM_PORT = '/dev/ttyUSB4'
-GRID_COUNT = 5
+GRID_COUNT = 32
 
 class App:
     width = 600
@@ -16,16 +18,16 @@ class App:
         #self.root.geometry(self.getGeometry(self.width + 200, self.height))
 
 
-        self.print_btn = Button(self.root, text="Print!", command=self.printFoam)
+        self.print_btn = Button(self.root, text="Print!\n打印", command=self.printFoam)
         self.print_btn.grid(row=1, column=0)
 
-        self.reset_btn = Button(self.root, text="Draw again", command=self.reset)
+        self.reset_btn = Button(self.root, text="Draw again\n重画", command=self.reset)
         self.reset_btn.grid(row=2, column=0)
 
-        self.open_shutter_btn = Button(self.root, text="Open shutters", command=self.openShutter)
+        self.open_shutter_btn = Button(self.root, text="Open shutters\n芝麻开门", command=self.openShutter)
         self.open_shutter_btn.grid(row=3, column=0)
 
-        self.close_shutter_btn = Button(self.root, text="Close shutters", command=self.closeShutter)
+        self.close_shutter_btn = Button(self.root, text="Close shutters\n芝麻关门", command=self.closeShutter)
         self.close_shutter_btn.grid(row=4, column=0)
 
         self.help_lbl = Label(self.root, text="Draw on the grids. Once it is a closed surface, press Print!", justify=CENTER, wraplength=80)
