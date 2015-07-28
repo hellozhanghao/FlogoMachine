@@ -146,7 +146,6 @@ class Surface:
         return first_printable_grid
 
     def getFillSurface(self, grid, visited):
-        # done
         visited.append(grid)
         for surr_grid in self.grid_map.grid(*grid).surroundingGrids():
             if self.grid_map.grid(*surr_grid).isPrintable():
@@ -154,7 +153,6 @@ class Surface:
                     self.getFillSurface(surr_grid, visited)
 
     def getFirstFilledSurface(self):
-        # done
         # find first printable grid
         # recursively find all printable grid next to it
         # return all found grid
@@ -167,7 +165,6 @@ class Surface:
         return filled_surface
 
     def hasOnlyOneFilledSurface(self):
-        # done
         # loop through every printable grid
         # check if any grid is not in getFirstFilledSurface
         # return false if found, else true
@@ -183,6 +180,15 @@ class Surface:
     def fillSurface(self):
         for grid_coord in self.complement_grids:
             self.grid_map.grid(*grid_coord).complement()
+
+    def getGridForPrinting(self):
+        grids = self.grid_map.grids
+        if not self.isHorizontallyConvexedSurface():
+            # transpose matrix
+            grids = zip(*grids)
+            print 'transposed'
+        return grids
+
             
 ###### test ####
 ##a= GridMap(5,5)
