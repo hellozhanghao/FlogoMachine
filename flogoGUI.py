@@ -8,6 +8,7 @@ import sys
 #COM_PORT = 'COM6'
 COM_PORT = '/dev/ttyUSB4'
 GRID_COUNT = 16
+SHUTTER_LIMIT = GRID_COUNT / 4 * 3
 sys.setrecursionlimit(3500)
 
 class App:
@@ -177,22 +178,29 @@ class App:
                     print "Arduino is busy"
 
     def getMsgForArduino(self, grids):
-        step_list = []
-        for row in range(GRID_COUNT):
+        for row, lhs, rhs in self.getShutterSteps(grids):
+            yield "-{:2}L{:2}R{:2}".format(row, lhs, rhs)
 
-            lhs = 0
+    def getShutterSteps(self, grids):
+        for row in range(GRID_COUNT):
             for lhs in range(GRID_COUNT):
                 if grids[row][lhs].isPrintable(): break
+                    
+            for rhs in range(GRID_COUNT):
+                if grids[row][GRID_COUNT - 1 - rhs].isPrintable(): break
 
-            rhs = 0
-            for rhs in range(GRID_COUNT - 1, -1, -1):
-                if grids[row][rhs].isPrintable(): break
-            rhs = GRID_COUNT - rhs - 1
+            # limit shutters to halfway point in empty row
+            if lhs == GRID_COUNT - 1:
+                lhs = rhs = GRID_COUNT / 2
 
-            if lhs + rhs == GRID_COUNT * 2 - 2:
-                rhs = lhs = GRID_COUNT / 2
+            # limit shutters to limiting point in case the shape requires them to move further
+            lhs = SHUTTER_LIMIT if lhs >= SHUTTER_LIMIT else lhs
+            rhs = SHUTTER_LIMIT if rhs >= SHUTTER_LIMIT else rhs
+            
+            if lhs >= SHUTTER_LIMIT or rhs >= SHUTTER_LIMIT:
+                print "Shutter steps restricted due to limited length."
 
-            yield "-{:2}L{:2}R{:2}".format(row, lhs, rhs)
+            yield (row, lhs, rhs)
 
     def serialWrite(self, msg):
         if self.ser:
