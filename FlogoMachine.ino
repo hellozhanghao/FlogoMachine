@@ -20,9 +20,6 @@
 #define STEPS_FOR_COMPLETE_SHUT2 GEAR_VAL * MOTOR2_GRID_COUNT
 #define CENTRE_POSITION(val) GEAR_VAL * ((REGISTER_COUNT / 2) + val)
 
-// TODO:
-// make total steps positional.
-
 class Motor {
 public:
     Motor() {};
@@ -273,8 +270,9 @@ void loop() {
 }
 
 void clearRegister(const int& register_count) {
-  for (int i = 0; i != register_count; ++i)
-    SPI.transfer(0);
-  ST_CP_low();
-  ST_CP_high();
+    for (int i = 0; i != register_count; ++i)
+        SPI.transfer(0);
+    ST_CP_low();
+    ST_CP_high();
 }
+
