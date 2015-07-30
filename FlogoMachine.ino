@@ -40,7 +40,6 @@ public:
     Shutter(const byte);
     void resetSteps();
     void populateRegister();
-    void populateRegister(const byte, const char*);
     void populateRegisterForClosing();
     void populateRegisterForReset();
     unsigned long getRemainingSteps();
@@ -75,19 +74,40 @@ void Shutter::resetSteps() {
 
 void Shutter::populateRegister() {
     char msg_buffer[11]; 
+    byte motor_steps[REGISTER_COUNT * 2];
+
+    // populate array directly with motor steps
+    // first half of array contain steps of left side motors
+    // other half of array contain steps of right side motors
     for (byte i = 0; i != register_count; ++i) {
         Serial.readBytes(msg_buffer, 11);
-        if (msg_buffer[0] == 'S' && msg_buffer[10] == 'E')
-            Shutter::populateRegister(i, msg_buffer);
-        else
+        String reg_info = String(msg_buffer);
+        if (msg_buffer[0] == 'S' && msg_buffer[10] == 'E') {
+            motor_steps[i * 2] = reg_info.substring(5, 7).toInt();
+            motor_steps[i * 2 + 1] = reg_info.substring(8, 10).toInt();
+        } else
             Serial.println("error");
     }
-}
 
-void Shutter::populateRegister(const byte register_index, const char* serial_msg) {
-    String reg_info = String(serial_msg);
-    reg[register_index].motor[0].target_position = reg_info.substring(5, 7).toInt() * GEAR_VAL;
-    reg[register_index].motor[1].target_position = reg_info.substring(8, 10).toInt() * GEAR_VAL;
+    // rearrange motor orders
+    byte first_motor_index_of_PCB[] = {0, 1, register_count, register_count + 1};
+    byte corrected_motor_order[REGISTER_COUNT * 2];
+
+    // looping through for 4 PCBs
+    byte k = 0;
+    for (byte i = 0; i != 4; ++i) {
+        for (byte j = 0; j != register_count / 2; ++j) {
+            corrected_motor_order[k] = first_motor_index_of_PCB[i] + 2 * j;
+            ++k;
+        }
+    }
+
+    // populate the individual register value base on the motor_steps array
+    // taking into account the staggered motors
+    for (byte i = 0; i != register_count; ++i) {
+        reg[i].motor[0].target_position = motor_steps[corrected_motor_order[i * 2]] * GEAR_VAL;
+        reg[i].motor[1].target_position = motor_steps[corrected_motor_order[i * 2 + 1]] * GEAR_VAL;
+    }
 }
 
 void Shutter::populateRegisterForClosing() {
