@@ -162,7 +162,7 @@ void Shutter::beginShutter() {
     }
     Serial.println("beginShutter");
     moveMotor();
-    clearRegister(5);
+    clearRegister(REGISTER_COUNT);
     is_ready = true;
     Serial.println("ready");
 }
@@ -179,7 +179,7 @@ void Shutter::resetShutter() {
     }
     Serial.println("resetShutter");
     moveMotor();
-    clearRegister(5);
+    clearRegister(REGISTER_COUNT);
     is_ready = true;
     Serial.println("ready");
 }
@@ -196,7 +196,7 @@ void Shutter::closeShutter() {
     }
     Serial.println("closeShutter");
     moveMotor();
-    clearRegister(5);
+    clearRegister(REGISTER_COUNT);
     is_ready = true;
     Serial.println("ready");
 }
@@ -246,7 +246,7 @@ void setup() {
     pinMode(SH_CP_PIN, OUTPUT);
     pinMode(ST_CP_PIN, OUTPUT);
     pinMode(DS_PIN, OUTPUT);
-    clearRegister(5);
+    clearRegister(REGISTER_COUNT);
     Serial.println("ready");
 }
 
