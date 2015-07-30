@@ -7,7 +7,7 @@ import sys
 
 #COM_PORT = 'COM6'
 COM_PORT = '/dev/ttyUSB4'
-GRID_COUNT = 32
+GRID_COUNT = 16
 sys.setrecursionlimit(3500)
 
 class App:
@@ -176,9 +176,10 @@ class App:
                 else:
                     print "Arduino is busy"
 
-    def getMsgForArduino(self, grids, separator='\n'):
+    def getMsgForArduino(self, grids):
         step_list = []
         for row in range(GRID_COUNT):
+
             lhs = 0
             for lhs in range(GRID_COUNT):
                 if grids[row][lhs].isPrintable(): break
@@ -186,17 +187,11 @@ class App:
             rhs = 0
             for rhs in range(GRID_COUNT - 1, -1, -1):
                 if grids[row][rhs].isPrintable(): break
-
             rhs = GRID_COUNT - rhs - 1
+
             if lhs + rhs == GRID_COUNT * 2 - 2:
-                lhs = GRID_COUNT / 2
-                rhs = GRID_COUNT / 2 + 1
-            elif lhs + rhs > GRID_COUNT:
-                difference = lhs + rhs - GRID_COUNT
-                if lhs > rhs:
-                    lhs -= difference
-                else:
-                    rhs -= difference
+                rhs = lhs = GRID_COUNT / 2
+
             yield "-{:2}L{:2}R{:2}".format(row, lhs, rhs)
 
     def serialWrite(self, msg):
