@@ -11,7 +11,7 @@
 #define rol(val, bits) ((val << 1) | (val >> (bits - 1))) & ((1 << bits) - 1)
 #define ror(val, bits) ((val >> 1) | (val << (bits - 1))) & ((1 << bits) - 1)
 
-#define DELAY_VAL 1
+#define DELAY_VAL 200
 #define REGISTER_COUNT 32
 #define GEAR_VAL 400
 #define MOTOR1_GRID_COUNT 2
@@ -83,11 +83,21 @@ void Shutter::populateRegister() {
         Serial.readBytes(msg_buffer, 11);
         String reg_info = String(msg_buffer);
         if (msg_buffer[0] == 'S' && msg_buffer[10] == 'E') {
-            motor_steps[i * 2] = reg_info.substring(5, 7).toInt();
-            motor_steps[i * 2 + 1] = reg_info.substring(8, 10).toInt();
+            motor_steps[i] = reg_info.substring(5, 7).toInt();
+            motor_steps[register_count + i] = reg_info.substring(8, 10).toInt();
         } else
             Serial.println("error");
     }
+
+    /*
+     *Serial.println("Motor steps:");
+     *for (byte i = 0; i != REGISTER_COUNT * 2; ++i) {
+     *    Serial.print("Motor ");
+     *    Serial.print(i + 1);
+     *    Serial.print(": ");
+     *    Serial.println(motor_steps[i]);
+     *}
+     */
 
     // rearrange motor orders
     byte first_motor_index_of_PCB[] = {0, 1, register_count, register_count + 1};
@@ -104,9 +114,21 @@ void Shutter::populateRegister() {
 
     // populate the individual register value base on the motor_steps array
     // taking into account the staggered motors
+    
+    //Serial.println("Motor target position:");
     for (byte i = 0; i != register_count; ++i) {
+        /*
+         *Serial.print("Register ");
+         *Serial.print(i + 1);
+         *Serial.print(": L");
+         */
         reg[i].motor[0].target_position = motor_steps[corrected_motor_order[i * 2]] * GEAR_VAL;
         reg[i].motor[1].target_position = motor_steps[corrected_motor_order[i * 2 + 1]] * GEAR_VAL;
+        /*
+         *Serial.print(reg[i].motor[0].target_position);
+         *Serial.print(" R");
+         *Serial.println(reg[i].motor[1].target_position);
+         */
     }
 }
 
@@ -229,7 +251,7 @@ void Shutter::moveMotor() {
             SPI.transfer(getRegisterValue(i));
             //Serial.println(getRegisterValue(i), BIN);
             updateRegisterValue(i);
-            delay(DELAY_VAL);
+            delayMicroseconds(DELAY_VAL);
         }
         ST_CP_high();
         remaining_steps = getRemainingSteps();
