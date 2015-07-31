@@ -11,14 +11,10 @@
 #define rol(val, bits) ((val << 1) | (val >> (bits - 1))) & ((1 << bits) - 1)
 #define ror(val, bits) ((val >> 1) | (val << (bits - 1))) & ((1 << bits) - 1)
 
-#define DELAY_VAL 200
+#define DELAY_VAL 100
 #define REGISTER_COUNT 32
 #define GEAR_VAL 400
-#define MOTOR1_GRID_COUNT 2
-#define MOTOR2_GRID_COUNT 3
-#define STEPS_FOR_COMPLETE_SHUT1 GEAR_VAL * MOTOR1_GRID_COUNT
-#define STEPS_FOR_COMPLETE_SHUT2 GEAR_VAL * MOTOR2_GRID_COUNT
-#define CENTRE_POSITION(val) GEAR_VAL * ((REGISTER_COUNT / 2) + val)
+#define CENTRE_POSITION GEAR_VAL * (REGISTER_COUNT / 2)
 
 class Motor {
 public:
@@ -132,22 +128,52 @@ void Shutter::populateRegister() {
     }
 }
 
+
 void Shutter::populateRegisterForClosing() {
     // It is possible that one side of the strip may be further in than the other.
     // In that case, we'll probably just want to close in the strip that is further away.
-    for (byte i = 0; i != register_count; ++i) {
-        byte moving_strip = 0, stationary_strip = -1;
-        if (reg[i].motor[0].target_position >= CENTRE_POSITION(0) || reg[i].motor[1].target_position >= CENTRE_POSITION(1)) {
-            // center_pos may be different in odd numbered sides
-            moving_strip = reg[i].motor[0].target_position >= CENTRE_POSITION(0) ? 1 : 0;
-            stationary_strip = !moving_strip;
-        }
-        // (moving_strip * GEAR_VAL): fix for odd numbered sides
-        reg[i].motor[moving_strip].target_position = CENTRE_POSITION(0) + (moving_strip * GEAR_VAL);
+    byte opposite_end = (register_count / 2);
+    for (byte i = 0; i != opposite_end; ++i) {
+        for (byte j = 0; j != 2; ++j) {
+            byte moving_strip = 0, stationary_strip = -1;
+            // checks which shutter has passed the centre position
+            if (reg[i].motor[j].target_position >= CENTRE_POSITION || reg[i + opposite_end].motor[j].target_position >= CENTRE_POSITION) {
+                moving_strip = reg[i].motor[j].target_position >= CENTRE_POSITION ? opposite_end : 0;
+                stationary_strip = 1;
+            }
 
-        if (stationary_strip == -1)
-            reg[i].motor[!moving_strip].target_position = CENTRE_POSITION(0) + (!moving_strip * GEAR_VAL);
+            byte other_strip = moving_strip == 0 ? opposite_end : 0;
+
+            if (stationary_strip == 1) {
+                // if one of them is going to be station, move the other up to the remaining distance
+                reg[i + moving_strip].motor[j].target_position = GEAR_VAL * register_count - reg[i + other_strip].motor[j].target_position;
+            }
+            else {
+                reg[i + moving_strip].motor[j].target_position = CENTRE_POSITION;
+                reg[i + other_strip].motor[j].target_position = CENTRE_POSITION;
+            }
+        }
     }
+/*
+ *    Serial.println("in populateRegisterForClosing:");
+ *    
+ *    for (byte i = 0; i != register_count; ++i) {
+ *        Serial.print("Target position of register ");
+ *        Serial.print(i + 1);
+ *        Serial.print(": L");
+ *        Serial.print(reg[i].motor[0].target_position);
+ *        Serial.print(" R");
+ *        Serial.println(reg[i].motor[1].target_position);
+ *
+ *        Serial.print("Current position of register ");
+ *        Serial.print(i + 1);
+ *        Serial.print(": L");
+ *        Serial.print(reg[i].motor[0].current_position);
+ *        Serial.print(" R");
+ *        Serial.println(reg[i].motor[1].current_position);
+ *
+ *    }
+ */
 }
 
 void Shutter::populateRegisterForReset() {
@@ -233,6 +259,7 @@ void Shutter::closeShutter() {
     for (byte i = 0; i != register_count; ++i) {
         for (byte j = 0; j != 2; ++j) {
             reg[i].motor[j].dir = 1;
+            // initialise only those motor that is not already at target position
             reg[i].motor[j].val = reg[i].motor[j].current_position != reg[i].motor[j].target_position ? 1 : 0;
         }
     }
