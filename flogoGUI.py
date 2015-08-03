@@ -7,7 +7,7 @@ import sys
 
 #COM_PORT = 'COM6'
 COM_PORT = '/dev/ttyUSB4'
-GRID_COUNT = 16
+GRID_COUNT = 32
 SHUTTER_LIMIT = GRID_COUNT / 4 * 3
 sys.setrecursionlimit(3500)
 
@@ -21,6 +21,9 @@ class App:
         #self.root.geometry(self.getGeometry(self.width + 200, self.height))
 
 
+        self.help_lbl = Label(self.root, text="Draw on the grids. Once it is a closed surface, press Print!", justify=CENTER, wraplength=80)
+        self.help_lbl.grid(row=0, column=0)
+
         self.print_btn = Button(self.root, text="Print!\n打印", command=self.printFoam)
         self.print_btn.grid(row=1, column=0)
 
@@ -33,8 +36,11 @@ class App:
         self.close_shutter_btn = Button(self.root, text="Close shutters\n芝麻关门", command=self.closeShutter)
         self.close_shutter_btn.grid(row=4, column=0)
 
-        self.help_lbl = Label(self.root, text="Draw on the grids. Once it is a closed surface, press Print!", justify=CENTER, wraplength=80)
-        self.help_lbl.grid(row=0, column=0)
+        self.force_open_btn = Button(self.root, text="Force open shutters\n硬硬开门", command=self.forceOpen)
+        self.force_open_btn.grid(row=5, column=0)
+
+        self.force_stop_btn = Button(self.root, text="Force shutters\nto stop\n硬硬开门", command=self.forceStop)
+        self.force_stop_btn.grid(row=6, column=0)
 
         self.canvas = Canvas(self.root,
                              width=self.width,
@@ -151,6 +157,26 @@ class App:
             if self.serial_msg == "ready":
                 self.serial_msg = None
                 self.serialWrite('C')
+            else:
+                print "Arduino is busy"
+        else:
+            print "Arduino is not connected"
+
+    def forceOpen(self):
+        if self.ser is not None:
+            if self.serial_msg == "ready":
+                self.serial_msg = None
+                self.serialWrite('F')
+            else:
+                print "Arduino is busy"
+        else:
+            print "Arduino is not connected"
+
+    def forceStop(self):
+        if self.ser is not None:
+            if self.serial_msg == "ready":
+                self.serial_msg = None
+                self.serialWrite('S')
             else:
                 print "Arduino is busy"
         else:
