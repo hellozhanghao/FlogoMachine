@@ -248,7 +248,27 @@ void Shutter::forceStop() {
 }
 
 void Shutter::forceOpen() {
-    NULL;
+    is_ready = false;
+
+    // Set current position as centre position regardless of actual position
+    for (byte i = 0; i != register_count; ++i) {
+        for (byte j = 0; j != 2; ++j) 
+            reg[i].motor[j].current_position = CENTRE_POSITION;
+            reg[i].motor[j].target_position = 0;
+    }
+
+    unsigned long remaining_steps = getRemainingSteps();
+    for (byte i = 0; i != register_count; ++i) {
+        for (byte j = 0; j != 2; ++j) {
+            reg[i].motor[j].dir = 0;
+            reg[i].motor[j].val = 1;
+        }
+    }
+    Serial.println("forceOpen");
+    moveMotor();
+    clearRegister(REGISTER_COUNT);
+    is_ready = true;
+    Serial.println("ready");
 }
 
 void Shutter::moveMotor() {
