@@ -44,6 +44,8 @@ public:
     void beginShutter();
     void closeShutter();
     void resetShutter();
+    void forceStop();
+    void forceOpen();
     byte getRegisterValue(const byte);
     void updateRegisterValue(const byte);
     bool isReady();
@@ -53,6 +55,7 @@ private:
     byte register_count = 0;
     Register* reg;
     bool is_ready = true;
+    bool force_stop = false;
 };
 
 
@@ -183,36 +186,6 @@ void Shutter::populateRegisterForReset() {
     }
 }    
 
-unsigned long Shutter::getRemainingSteps() {
-    unsigned long steps = 0;
-    for (byte i = 0; i!= register_count; ++i) {
-        for (byte j = 0; j != 2; ++j)
-            steps += abs(reg[i].motor[j].target_position - reg[i].motor[j].current_position);
-    }
-    return steps;
-}
-
-unsigned long Shutter::getRemainingStepsVerbose() {
-    unsigned long steps = 0;
-    for (byte i = 0; i!= register_count; ++i) {
-
-        Serial.println("remaining steps:");
-        Serial.print("R");
-        Serial.println(i);
-
-        for (byte j = 0; j != 2; ++j) {
-            steps += abs(reg[i].motor[j].target_position - reg[i].motor[j].current_position);
-
-            Serial.print("Motor");
-            Serial.print(j + 1);
-            Serial.print(": ");
-            Serial.println(abs(reg[i].motor[j].target_position - reg[i].motor[j].current_position));
-        }
-
-    }
-    return steps;
-}
-
 void Shutter::beginShutter() {
     is_ready = false;
     for (byte i = 0; i != register_count; ++i) {
@@ -270,9 +243,21 @@ void Shutter::closeShutter() {
     Serial.println("ready");
 }
 
+void Shutter::forceStop() {
+    force_stop = true;
+}
+
+void Shutter::forceOpen() {
+    NULL;
+}
+
 void Shutter::moveMotor() {
     unsigned long remaining_steps = getRemainingSteps();
     while (remaining_steps > 0) {
+        if (force_stop) {
+            force_stop = false;
+            break;
+        }
         ST_CP_low();
         for (byte i = 0; i != register_count; ++i) {
             SPI.transfer(getRegisterValue(i));
@@ -283,6 +268,36 @@ void Shutter::moveMotor() {
         ST_CP_high();
         remaining_steps = getRemainingSteps();
     }
+}
+
+unsigned long Shutter::getRemainingSteps() {
+    unsigned long steps = 0;
+    for (byte i = 0; i!= register_count; ++i) {
+        for (byte j = 0; j != 2; ++j)
+            steps += abs(reg[i].motor[j].target_position - reg[i].motor[j].current_position);
+    }
+    return steps;
+}
+
+unsigned long Shutter::getRemainingStepsVerbose() {
+    unsigned long steps = 0;
+    for (byte i = 0; i!= register_count; ++i) {
+
+        Serial.println("remaining steps:");
+        Serial.print("R");
+        Serial.println(i);
+
+        for (byte j = 0; j != 2; ++j) {
+            steps += abs(reg[i].motor[j].target_position - reg[i].motor[j].current_position);
+
+            Serial.print("Motor");
+            Serial.print(j + 1);
+            Serial.print(": ");
+            Serial.println(abs(reg[i].motor[j].target_position - reg[i].motor[j].current_position));
+        }
+
+    }
+    return steps;
 }
 
 byte Shutter::getRegisterValue(const byte reg_index) {
