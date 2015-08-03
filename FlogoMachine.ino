@@ -140,8 +140,8 @@ void Shutter::populateRegisterForClosing() {
         for (byte j = 0; j != 2; ++j) {
             byte moving_strip = 0, stationary_strip = -1;
             // checks which shutter has passed the centre position
-            if (reg[i].motor[j].target_position >= CENTRE_POSITION || reg[i + opposite_end].motor[j].target_position >= CENTRE_POSITION) {
-                moving_strip = reg[i].motor[j].target_position >= CENTRE_POSITION ? opposite_end : 0;
+            if (reg[i].motor[j].current_position >= CENTRE_POSITION || reg[i + opposite_end].motor[j].current_position >= CENTRE_POSITION) {
+                moving_strip = reg[i].motor[j].current_position >= CENTRE_POSITION ? opposite_end : 0;
                 stationary_strip = 1;
             }
 
