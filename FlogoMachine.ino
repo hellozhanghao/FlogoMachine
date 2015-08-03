@@ -366,6 +366,10 @@ void loop() {
             shutter.resetShutter();
         } else if (serial_read == 'C') {
             shutter.closeShutter();
+        } else if (serial_read == 'S') {
+            shutter.forceStop();
+        } else if (serial_read == 'F') {
+            shutter.forceOpen();
         } else if (serial_read == 'R') {
             if (shutter.isReady())
                 Serial.println("ready");
