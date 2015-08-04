@@ -174,11 +174,11 @@ class App:
 
     def forceStop(self):
         if self.ser is not None:
-            if self.serial_msg == "ready":
+            if self.serial_msg != "ready":
                 self.serial_msg = None
                 self.serialWrite('S')
             else:
-                print "Arduino is busy"
+                print "Shutter is not moving!"
         else:
             print "Arduino is not connected"
 
