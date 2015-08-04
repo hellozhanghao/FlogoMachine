@@ -5,8 +5,18 @@ from utility import *
 import serial
 import sys
 
-#COM_PORT = 'COM6'
-COM_PORT = '/dev/ttyUSB4'
+COM_PORT = ['/dev/ttyUSB4',
+            '/dev/ttyUSB5',
+            '/dev/ttyUSB6',
+            '/dev/ttyUSB7',
+            'COM1',
+            'COM2',
+            'COM3',
+            'COM4',
+            'COM5',
+            'COM6',
+            'COM7',
+            'COM8']
 GRID_COUNT = 32
 SHUTTER_LIMIT = GRID_COUNT / 4 * 3
 sys.setrecursionlimit(3500)
@@ -62,10 +72,17 @@ class App:
         self.eventLoop()
 
     def initialiseSerial(self):
-        try:
-            self.ser = serial.Serial(COM_PORT, 9600, timeout=0.01)
+        for port in COM_PORT:
+            try:
+                self.ser = serial.Serial(port, 9600, timeout=0.01)
+                print "Connected to", port
+                break
+            except:
+                continue
+
+        if self.ser is not None:
             self.probeArduino()
-        except:
+        else:
             print "serial com port not established."
 
     def printMsgFromArduino(self):
