@@ -11,7 +11,7 @@
 #define rol(val, bits) ((val << 1) | (val >> (bits - 1))) & ((1 << bits) - 1)
 #define ror(val, bits) ((val >> 1) | (val << (bits - 1))) & ((1 << bits) - 1)
 
-#define DELAY_VAL 100
+#define DELAY_VAL 150
 #define REGISTER_COUNT 32
 #define GEAR_VAL 400
 #define CENTRE_POSITION GEAR_VAL * (REGISTER_COUNT / 2)
@@ -35,6 +35,7 @@ class Shutter {
 public:
     Shutter(const byte);
     void resetSteps();
+    byte physicalToGUIMotorIndex(const byte);
     void populateRegister();
     void populateRegisterForClosing();
     void populateRegisterForReset();
@@ -71,9 +72,26 @@ void Shutter::resetSteps() {
     }
 }
 
+byte Shutter::physicalToGUIMotorIndex(byte physical_index) {
+    // probably better not do a const byte to save memory
+    byte physical_GUI_index_table[REGISTER_COUNT * 2];
+
+    for (byte i = 0; i != REGISTER_COUNT / 2; ++i) {
+        physical_GUI_index_table[i] = i * 2;
+        physical_GUI_index_table[i + 16] = i * 2 + 1;
+    }
+
+    for (byte i = 0; i != REGISTER_COUNT / 2; ++i) {
+        physical_GUI_index_table[i + REGISTER_COUNT] = (REGISTER_COUNT * 2) - 1 - (i * 2);
+        physical_GUI_index_table[i + (REGISTER_COUNT / 2 * 3)] = (REGISTER_COUNT * 2) - 2 - (i * 2);
+    }
+
+    return physical_GUI_index_table[physical_index]; 
+}
+
 void Shutter::populateRegister() {
     char msg_buffer[11]; 
-    byte motor_steps[REGISTER_COUNT * 2];
+    byte GUI_motor_steps[REGISTER_COUNT * 2];
 
     // populate array directly with motor steps
     // first half of array contain steps of left side motors
@@ -82,8 +100,8 @@ void Shutter::populateRegister() {
         Serial.readBytes(msg_buffer, 11);
         String reg_info = String(msg_buffer);
         if (msg_buffer[0] == 'S' && msg_buffer[10] == 'E') {
-            motor_steps[i] = reg_info.substring(5, 7).toInt();
-            motor_steps[register_count + i] = reg_info.substring(8, 10).toInt();
+            GUI_motor_steps[i] = reg_info.substring(5, 7).toInt();
+            GUI_motor_steps[register_count + i] = reg_info.substring(8, 10).toInt();
         } else
             Serial.println("error");
     }
@@ -94,38 +112,36 @@ void Shutter::populateRegister() {
      *    Serial.print("Motor ");
      *    Serial.print(i + 1);
      *    Serial.print(": ");
-     *    Serial.println(motor_steps[i]);
+     *    Serial.println(GUI_motor_steps[i]);
      *}
      */
 
-    // rearrange motor orders
-    byte first_motor_index_of_PCB[] = {0, 1, register_count, register_count + 1};
-    byte corrected_motor_order[REGISTER_COUNT * 2];
+    /*
+     *Serial.println("Physical to GUI motor index table:");
+     *for (byte i = 0; i!= REGISTER_COUNT * 2; ++i) {
+     *    Serial.print(i);
+     *    Serial.print("\t");
+     *    Serial.println(physicalToGUIMotorIndex(i));
+     *}
+     */
 
-    // looping through for 4 PCBs
-    byte k = 0;
-    for (byte i = 0; i != 4; ++i) {
-        for (byte j = 0; j != register_count / 2; ++j) {
-            corrected_motor_order[k] = first_motor_index_of_PCB[i] + 2 * j;
-            ++k;
-        }
-    }
-
-    // populate the individual register value base on the motor_steps array
+    // populate the individual register value base on the GUI_motor_steps array
     // taking into account the staggered motors
     
     //Serial.println("Motor target position:");
     for (byte i = 0; i != register_count; ++i) {
         /*
-         *Serial.print("Register ");
-         *Serial.print(i + 1);
-         *Serial.print(": L");
+         *Serial.print("Motor ");
+         *Serial.print(i * 2);
+         *Serial.print(": ");
          */
-        reg[i].motor[0].target_position = motor_steps[corrected_motor_order[i * 2]] * GEAR_VAL;
-        reg[i].motor[1].target_position = motor_steps[corrected_motor_order[i * 2 + 1]] * GEAR_VAL;
+        reg[i].motor[0].target_position = GUI_motor_steps[physicalToGUIMotorIndex(i * 2)] * GEAR_VAL;
+        reg[i].motor[1].target_position = GUI_motor_steps[physicalToGUIMotorIndex(i * 2 + 1)] * GEAR_VAL;
         /*
-         *Serial.print(reg[i].motor[0].target_position);
-         *Serial.print(" R");
+         *Serial.println(reg[i].motor[0].target_position);
+         *Serial.print("Motor ");
+         *Serial.print(i * 2 + 1);
+         *Serial.print(": ");
          *Serial.println(reg[i].motor[1].target_position);
          */
     }
@@ -261,7 +277,7 @@ void Shutter::forceOpen() {
     unsigned long remaining_steps = getRemainingSteps();
     for (byte i = 0; i != register_count; ++i) {
         for (byte j = 0; j != 2; ++j) {
-            reg[i].motor[j].dir = 0;
+            reg[i].motor[j].dir = -1;
             reg[i].motor[j].val = 1;
         }
     }
