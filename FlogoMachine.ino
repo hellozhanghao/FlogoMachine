@@ -173,6 +173,27 @@ void Shutter::populateRegisterForClosing() {
             }
         }
     }
+
+    /*
+     *Serial.println("Closing stats:");
+     *Serial.println("\tCurrent\tTarget:");
+     *for (byte i = 0; i != register_count; ++i) {
+     *    Serial.print("Motor ");
+     *    Serial.print(i * 2);
+     *    Serial.print(":\t");
+     *    Serial.print(reg[i].motor[0].current_position);
+     *    Serial.print("\t");
+     *    Serial.println(reg[i].motor[0].target_position);
+     *    Serial.print("Motor ");
+     *    Serial.print(i * 2 + 1);
+     *    Serial.print(":\t");
+     *    Serial.print(reg[i].motor[1].current_position);
+     *    Serial.print("\t");
+     *    Serial.println(reg[i].motor[1].target_position);
+     *}
+     */
+
+
 /*
  *    Serial.println("in populateRegisterForClosing:");
  *    
@@ -206,15 +227,9 @@ void Shutter::beginShutter() {
     is_ready = false;
     for (byte i = 0; i != register_count; ++i) {
         for (byte j = 0; j != 2; ++j) {
-            if (reg[i].motor[j].target_position != reg[i].motor[j].current_position) {
-                reg[i].motor[j].dir = 1;
-                if (reg[i].motor[j].target_position < reg[i].motor[j].current_position) {
-                    reg[i].motor[j].dir = -1;
-                }
-                reg[i].motor[j].val = 1;
-            } else {
-                reg[i].motor[j].val = 0;
-            }
+            reg[i].motor[j].dir = reg[i].motor[j].current_position < reg[i].motor[j].target_position ? 1 : -1;
+            // initialise only those motor that is not already at target position
+            reg[i].motor[j].val = reg[i].motor[j].current_position != reg[i].motor[j].target_position ? 1 : 0;
         }
     }
     Serial.println("beginShutter");
@@ -247,7 +262,7 @@ void Shutter::closeShutter() {
     unsigned long remaining_steps = getRemainingSteps();
     for (byte i = 0; i != register_count; ++i) {
         for (byte j = 0; j != 2; ++j) {
-            reg[i].motor[j].dir = 1;
+            reg[i].motor[j].dir = reg[i].motor[j].current_position < reg[i].motor[j].target_position ? 1 : -1;
             // initialise only those motor that is not already at target position
             reg[i].motor[j].val = reg[i].motor[j].current_position != reg[i].motor[j].target_position ? 1 : 0;
         }
