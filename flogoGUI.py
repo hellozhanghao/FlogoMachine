@@ -49,8 +49,11 @@ class App:
         self.force_open_btn = Button(self.root, text="Force open shutters\n硬硬开门", command=self.forceOpen)
         self.force_open_btn.grid(row=5, column=0)
 
-        self.force_stop_btn = Button(self.root, text="Force shutters\nto stop\n硬硬开门", command=self.forceStop)
+        self.force_stop_btn = Button(self.root, text="Force shutters\nto stop\n硬硬停止", command=self.forceStop)
         self.force_stop_btn.grid(row=6, column=0)
+
+        self.hard_reset_btn = Button(self.root, text="Hard reset\nmachine\n硬硬重新", command=self.hardReset)
+        self.hard_reset_btn.grid(row=7, column=0)
 
         self.canvas = Canvas(self.root,
                              width=self.width,
@@ -196,6 +199,16 @@ class App:
                 self.serialWrite('S')
             else:
                 print "Shutter is not moving!"
+        else:
+            print "Arduino is not connected"
+
+    def hardReset(self):
+        if self.ser is not None:
+            if self.serial_msg == "ready":
+                self.serial_msg = None
+                self.serialWrite('H')
+            else:
+                print "Arduino is busy"
         else:
             print "Arduino is not connected"
 
