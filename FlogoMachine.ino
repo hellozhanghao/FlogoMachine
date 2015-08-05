@@ -11,7 +11,7 @@
 #define rol(val, bits) ((val << 1) | (val >> (bits - 1))) & ((1 << bits) - 1)
 #define ror(val, bits) ((val >> 1) | (val << (bits - 1))) & ((1 << bits) - 1)
 
-#define DELAY_VAL 150
+#define DELAY_VAL 100
 #define REGISTER_COUNT 32
 #define GEAR_VAL 370
 #define CENTRE_POSITION GEAR_VAL * (REGISTER_COUNT / 2)
@@ -45,6 +45,7 @@ public:
     void beginShutter();
     void closeShutter();
     void resetShutter();
+    void hardReset();
     void forceOpen();
     byte getRegisterValue(const byte);
     void updateRegisterValue(const byte);
@@ -283,6 +284,23 @@ void Shutter::forceOpen() {
     Serial.println("ready");
 }
 
+void Shutter::hardReset() {
+    is_ready = false;
+
+    // Reset current position to zero
+    for (byte i = 0; i != register_count; ++i) {
+        for (byte j = 0; j != 2; ++j) {
+            reg[i].motor[j].current_position = 0;
+            reg[i].motor[j].target_position = 0;
+        }
+    }
+
+    Serial.println("Hard reset");
+    clearRegister(REGISTER_COUNT);
+    is_ready = true;
+    Serial.println("ready");
+}
+
 void Shutter::moveMotor() {
     unsigned long remaining_steps = getRemainingSteps();
     while (remaining_steps > 0) {
@@ -378,6 +396,8 @@ void loop() {
             shutter.resetShutter();
         } else if (serial_read == 'C') {
             shutter.closeShutter();
+        } else if (serial_read == 'H') {
+            shutter.hardReset();
         } else if (serial_read == 'F') {
             shutter.forceOpen();
         } else if (serial_read == 'R') {
