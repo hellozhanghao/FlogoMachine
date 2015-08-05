@@ -18,7 +18,7 @@ COM_PORT = ['/dev/ttyUSB4',
             'COM7',
             'COM8']
 GRID_COUNT = 32
-SHUTTER_LIMIT = GRID_COUNT / 4 * 3
+SHUTTER_LIMIT = 22
 sys.setrecursionlimit(3500)
 
 class App:
