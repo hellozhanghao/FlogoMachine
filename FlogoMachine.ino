@@ -13,7 +13,7 @@
 
 #define DELAY_VAL 150
 #define REGISTER_COUNT 32
-#define GEAR_VAL 400
+#define GEAR_VAL 370
 #define CENTRE_POSITION GEAR_VAL * (REGISTER_COUNT / 2)
 
 class Motor {
@@ -45,7 +45,6 @@ public:
     void beginShutter();
     void closeShutter();
     void resetShutter();
-    void forceStop();
     void forceOpen();
     byte getRegisterValue(const byte);
     void updateRegisterValue(const byte);
@@ -259,10 +258,6 @@ void Shutter::closeShutter() {
     Serial.println("ready");
 }
 
-void Shutter::forceStop() {
-    force_stop = true;
-}
-
 void Shutter::forceOpen() {
     is_ready = false;
 
@@ -291,9 +286,9 @@ void Shutter::forceOpen() {
 void Shutter::moveMotor() {
     unsigned long remaining_steps = getRemainingSteps();
     while (remaining_steps > 0) {
-        if (force_stop) {
-            force_stop = false;
-            break;
+        if (Serial.available() > 0) {
+            if (Serial.read() == 'S')
+                break;
         }
         ST_CP_low();
         for (byte i = 0; i != register_count; ++i) {
@@ -383,8 +378,6 @@ void loop() {
             shutter.resetShutter();
         } else if (serial_read == 'C') {
             shutter.closeShutter();
-        } else if (serial_read == 'S') {
-            shutter.forceStop();
         } else if (serial_read == 'F') {
             shutter.forceOpen();
         } else if (serial_read == 'R') {
