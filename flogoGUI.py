@@ -17,6 +17,7 @@ COM_PORT = ['/dev/ttyUSB4',
             'COM6',
             'COM7',
             'COM8']
+BAUD_RATE = 9600
 GRID_COUNT = 32
 SHUTTER_LIMIT = 22
 sys.setrecursionlimit(3500)
@@ -77,7 +78,7 @@ class App:
     def initialiseSerial(self):
         for port in COM_PORT:
             try:
-                self.ser = serial.Serial(port, 9600, timeout=0.01)
+                self.ser = serial.Serial(port, BAUD_RATE, timeout=0.001)
                 print "Connected to", port
                 break
             except:
