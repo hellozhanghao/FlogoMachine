@@ -20,8 +20,8 @@ class Motor {
 public:
     Motor() {};
     byte val = 0;
-    unsigned long current_position = 0;
-    unsigned long target_position = 0;
+    unsigned int current_position = 0;
+    unsigned int target_position = 0;
     char dir = 0;
 };
 
@@ -39,7 +39,7 @@ public:
     void populateRegister();
     void populateRegisterForClosing();
     void populateRegisterForReset();
-    unsigned long getRemainingSteps();
+    bool hasRemainingSteps();
     unsigned long getRemainingStepsVerbose();
     void moveMotor();
     void beginShutter();
@@ -242,7 +242,6 @@ void Shutter::beginShutter() {
 void Shutter::resetShutter() {
     is_ready = false;
     populateRegisterForReset();
-    unsigned long remaining_steps = getRemainingSteps();
     for (byte i = 0; i != register_count; ++i) {
         for (byte j = 0; j != 2; ++j) {
             reg[i].motor[j].dir = -1;
@@ -259,7 +258,6 @@ void Shutter::resetShutter() {
 void Shutter::closeShutter() {
     is_ready = false;
     populateRegisterForClosing();
-    unsigned long remaining_steps = getRemainingSteps();
     for (byte i = 0; i != register_count; ++i) {
         for (byte j = 0; j != 2; ++j) {
             reg[i].motor[j].dir = reg[i].motor[j].current_position < reg[i].motor[j].target_position ? 1 : -1;
@@ -285,7 +283,6 @@ void Shutter::forceOpen() {
         }
     }
 
-    unsigned long remaining_steps = getRemainingSteps();
     for (byte i = 0; i != register_count; ++i) {
         for (byte j = 0; j != 2; ++j) {
             reg[i].motor[j].dir = -1;
@@ -317,8 +314,8 @@ void Shutter::hardReset() {
 }
 
 void Shutter::moveMotor() {
-    unsigned long remaining_steps = getRemainingSteps();
-    while (remaining_steps > 0) {
+    bool has_remaining_steps = hasRemainingSteps();
+    while (has_remaining_steps) {
         if (Serial.available() > 0) {
             if (Serial.read() == 'S')
                 break;
@@ -331,17 +328,16 @@ void Shutter::moveMotor() {
             delayMicroseconds(DELAY_VAL);
         }
         ST_CP_high();
-        remaining_steps = getRemainingSteps();
+        has_remaining_steps = hasRemainingSteps();
     }
 }
 
-unsigned long Shutter::getRemainingSteps() {
-    unsigned long steps = 0;
+bool Shutter::hasRemainingSteps() {
     for (byte i = 0; i!= register_count; ++i) {
-        for (byte j = 0; j != 2; ++j)
-            steps += abs(reg[i].motor[j].target_position - reg[i].motor[j].current_position);
+        if (reg[i].motor[0].val != 0 || reg[i].motor[1].val != 0)
+            return true;
     }
-    return steps;
+    return false;
 }
 
 unsigned long Shutter::getRemainingStepsVerbose() {
@@ -370,6 +366,14 @@ byte Shutter::getRegisterValue(const byte reg_index) {
 }
 
 void Shutter::updateRegisterValue(const byte reg_index) {
+    /*
+     *if (reg_index == 16) { // check to see if this is the correct register
+     *    reg[reg_index].motor[0].val = 0;
+     *    reg[reg_index].motor[1].val = 0;
+     *}
+     */
+    //static bool stopped0 = false;
+    //static bool stopped1 = false;
     for (byte j = 0; j != 2; ++j) {
         if (reg[reg_index].motor[j].current_position != reg[reg_index].motor[j].target_position) {
             if (reg[reg_index].motor[j].dir > 0)
@@ -380,7 +384,28 @@ void Shutter::updateRegisterValue(const byte reg_index) {
         } else {
             reg[reg_index].motor[j].val = 0;
         }
+        
     }
+    /*
+     *if (reg_index == 16) {
+     *    if (!stopped0 && reg[reg_index].motor[0].val == 0) {
+     *        stopped0 = true;
+     *        Serial.print("motor");
+     *        Serial.print(0);
+     *        Serial.println(" stopped.");
+     *    } else if (reg[reg_index].motor[0].val != 0) {
+     *        stopped0 = false;
+     *    }
+     *    if (!stopped1 && reg[reg_index].motor[1].val == 0) {
+     *        stopped1 = true;
+     *        Serial.print("motor");
+     *        Serial.print(1);
+     *        Serial.println(" stopped.");
+     *    } else if (reg[reg_index].motor[1].val != 0) {
+     *        stopped1 = false;
+     *    }
+     *}
+     */
 }
 
 bool Shutter::isReady() {
