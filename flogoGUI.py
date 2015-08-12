@@ -9,9 +9,6 @@ COM_PORT = ['/dev/ttyUSB4',
             '/dev/ttyUSB5',
             '/dev/ttyUSB6',
             '/dev/ttyUSB7',
-            'COM1',
-            'COM2',
-            'COM3',
             'COM4',
             'COM5',
             'COM6',
@@ -81,7 +78,7 @@ class App:
     def initialiseSerial(self):
         for port in COM_PORT:
             try:
-                self.ser = serial.Serial(port, BAUD_RATE, timeout=0.001)
+                self.ser = serial.Serial(port, BAUD_RATE, timeout=0.01)
                 print "Connected to", port
                 break
             except:
