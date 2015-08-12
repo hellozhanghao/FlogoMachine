@@ -149,71 +149,10 @@ void Shutter::populateRegister() {
 
 
 void Shutter::populateRegisterForClosing() {
-    // It is possible that one side of the strip may be further in than the other.
-    // In that case, we'll probably just want to close in the strip that is further away.
-    byte opposite_end = (register_count / 2);
-    for (byte i = 0; i != opposite_end; ++i) {
-        for (byte j = 0; j != 2; ++j) {
-            byte moving_strip = 0, stationary_strip = -1;
-            // checks which shutter has passed the centre position
-            if (reg[i].motor[j].current_position >= CENTRE_POSITION || reg[i + opposite_end].motor[j].current_position >= CENTRE_POSITION) {
-                moving_strip = reg[i].motor[j].current_position >= CENTRE_POSITION ? opposite_end : 0;
-                stationary_strip = 1;
-            }
-
-            byte other_strip = moving_strip == 0 ? opposite_end : 0;
-
-            if (stationary_strip == 1) {
-                // if one of them is going to be station, move the other up to the remaining distance
-                reg[i + moving_strip].motor[j].target_position = GEAR_VAL * register_count - reg[i + other_strip].motor[j].target_position;
-            }
-            else {
-                reg[i + moving_strip].motor[j].target_position = CENTRE_POSITION;
-                reg[i + other_strip].motor[j].target_position = CENTRE_POSITION;
-            }
-        }
+    for (byte i = 0; i != register_count; ++i) {
+        for (byte j = 0; j != 2; ++j) 
+            reg[i].motor[j].target_position = CENTRE_POSITION;
     }
-
-    /*
-     *Serial.println("Closing stats:");
-     *Serial.println("\tCurrent\tTarget:");
-     *for (byte i = 0; i != register_count; ++i) {
-     *    Serial.print("Motor ");
-     *    Serial.print(i * 2);
-     *    Serial.print(":\t");
-     *    Serial.print(reg[i].motor[0].current_position);
-     *    Serial.print("\t");
-     *    Serial.println(reg[i].motor[0].target_position);
-     *    Serial.print("Motor ");
-     *    Serial.print(i * 2 + 1);
-     *    Serial.print(":\t");
-     *    Serial.print(reg[i].motor[1].current_position);
-     *    Serial.print("\t");
-     *    Serial.println(reg[i].motor[1].target_position);
-     *}
-     */
-
-
-/*
- *    Serial.println("in populateRegisterForClosing:");
- *    
- *    for (byte i = 0; i != register_count; ++i) {
- *        Serial.print("Target position of register ");
- *        Serial.print(i + 1);
- *        Serial.print(": L");
- *        Serial.print(reg[i].motor[0].target_position);
- *        Serial.print(" R");
- *        Serial.println(reg[i].motor[1].target_position);
- *
- *        Serial.print("Current position of register ");
- *        Serial.print(i + 1);
- *        Serial.print(": L");
- *        Serial.print(reg[i].motor[0].current_position);
- *        Serial.print(" R");
- *        Serial.println(reg[i].motor[1].current_position);
- *
- *    }
- */
 }
 
 void Shutter::populateRegisterForOpening() {
