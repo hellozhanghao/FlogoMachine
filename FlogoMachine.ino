@@ -15,19 +15,18 @@
 #define REGISTER_COUNT 32
 #define GEAR_VAL 370
 #define CENTRE_POSITION GEAR_VAL * (REGISTER_COUNT / 2)
+#define ORIGIN CENTRE_POSITION
 
 class Motor {
 public:
-    Motor() {};
     byte val = 0;
-    unsigned int current_position = 0;
-    unsigned int target_position = 0;
+    unsigned int current_position = ORIGIN;
+    unsigned int target_position = ORIGIN;
     char dir = 0;
 };
 
 class Register {
 public:
-    Register() {};
     Motor motor[2];
 };
 
@@ -302,8 +301,8 @@ void Shutter::hardReset() {
     // Reset current position to zero
     for (byte i = 0; i != register_count; ++i) {
         for (byte j = 0; j != 2; ++j) {
-            reg[i].motor[j].current_position = 0;
-            reg[i].motor[j].target_position = 0;
+            reg[i].motor[j].current_position = ORIGIN;
+            reg[i].motor[j].target_position = ORIGIN;
         }
     }
 
