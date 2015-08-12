@@ -32,29 +32,32 @@ class App:
         self.help_lbl = Label(self.root, text="Draw on the grids. Once it is a closed surface, press Print!", justify=CENTER, wraplength=80)
         self.help_lbl.grid(row=0, column=0)
 
+        self.mode_btn = Button(self.root, text="Erase\n擦掉", command=self.changeMode)
+        self.mode_btn.grid(row=1, column=0)
+
         self.print_btn = Button(self.root, text="Print!\n打印", command=self.printFoam)
-        self.print_btn.grid(row=1, column=0)
+        self.print_btn.grid(row=2, column=0)
 
         self.reset_btn = Button(self.root, text="Draw again\n重画", command=self.reset)
-        self.reset_btn.grid(row=2, column=0)
+        self.reset_btn.grid(row=3, column=0)
 
         self.open_shutter_btn = Button(self.root, text="Open shutters\n芝麻开门", command=self.openShutter)
-        self.open_shutter_btn.grid(row=3, column=0)
+        self.open_shutter_btn.grid(row=4, column=0)
 
         self.close_shutter_btn = Button(self.root, text="Close shutters\n芝麻关门", command=self.closeShutter)
-        self.close_shutter_btn.grid(row=4, column=0)
+        self.close_shutter_btn.grid(row=5, column=0)
 
         self.force_open_btn = Button(self.root, text="Force open shutters\n硬硬开门", command=self.forceOpen)
-        self.force_open_btn.grid(row=5, column=0)
+        self.force_open_btn.grid(row=6, column=0)
 
         self.force_close_btn = Button(self.root, text="Force close shutters\n硬硬关门", command=self.forceClose)
-        self.force_close_btn.grid(row=6, column=0)
+        self.force_close_btn.grid(row=7, column=0)
 
         self.force_stop_btn = Button(self.root, text="Force shutters\nto stop\n硬硬停止", command=self.forceStop)
-        self.force_stop_btn.grid(row=7, column=0)
+        self.force_stop_btn.grid(row=8, column=0)
 
         self.hard_reset_btn = Button(self.root, text="Hard reset\nmachine\n硬硬重新", command=self.hardReset)
-        self.hard_reset_btn.grid(row=8, column=0)
+        self.hard_reset_btn.grid(row=9, column=0)
 
         self.canvas = Canvas(self.root,
                              width=self.width,
@@ -115,7 +118,7 @@ class App:
 
     def updateSingleGrid(self, coord):
         grid = self.grid_map.grid(*self.grid_map.pixelToGridCoord(coord))
-        if grid.isPrintable():
+        if grid.isOccupied():
             self.canvas.itemconfig(grid.ID, fill = 'CYAN')
         else:
             self.canvas.itemconfig(grid.ID, fill = 'WHITE')
@@ -224,6 +227,13 @@ class App:
                 print "Arduino is busy"
         else:
             print "Arduino is not connected"
+
+    def changeMode(self):
+        self.grid_map.erase_mode = not self.grid_map.erase_mode
+        if self.grid_map.erase_mode:
+            self.mode_btn.config(text="Draw\n画")
+        else:
+            self.mode_btn.config(text="Erase\n擦掉")
 
     def printFoam(self):
         self.surface.fillSurface()

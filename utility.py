@@ -17,6 +17,9 @@ class Grid:
     def gridCoord(self):
         return self.grid_coord
 
+    def clear(self):
+        self.state = '-'
+
     def occupy(self):
         self.state = 'o'
 
@@ -40,6 +43,7 @@ class GridMap:
         self.grid_count = grid_count
         self.grid_size = grid_size
         self.grids = self.createGrids(grid_count)
+        self.erase_mode = False
 
     def createGrids(self, size):
         return [[Grid((i, j), self.grid_count) for i in range(size)] for j in range(size)]
@@ -66,7 +70,10 @@ class GridMap:
 
     def clicked(self, coord):
         grid_coord = self.pixelToGridCoord(coord)
-        self.grid(*grid_coord).occupy()
+        if self.erase_mode:
+            self.grid(*grid_coord).clear()
+        else:
+            self.grid(*grid_coord).occupy()
 
     def __str__(self):
         return '\n'.join([str([grid.state for grid in self.grids[i]]) for i in range(self.grid_count)])
