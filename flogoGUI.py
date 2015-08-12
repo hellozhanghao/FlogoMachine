@@ -148,6 +148,8 @@ class App:
 
     def mouseDown(self, event):
         self.isMouseDown = True
+        self.grid_map.clicked((event.x, event.y))
+        self.updateSingleGrid((event.x, event.y))
 
     def mouseUp(self, event):
         self.isMouseDown = False
