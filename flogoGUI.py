@@ -15,6 +15,7 @@ COM_PORT = ['/dev/ttyUSB4',
             'COM7',
             'COM8']
 BAUD_RATE = 9600
+TIME_OUT = 0.001
 GRID_COUNT = 32
 SHUTTER_LIMIT = 22
 sys.setrecursionlimit(3500)
@@ -59,6 +60,9 @@ class App:
         self.hard_reset_btn = Button(self.root, text="Hard reset\nmachine\n硬硬重新", command=self.hardReset)
         self.hard_reset_btn.grid(row=9, column=0)
 
+        self.check_ready_btn = Button(self.root, text="Check readiness\n查Arduino", command=self.checkReady)
+        self.check_ready_btn.grid(row=10, column=0)
+
         self.canvas = Canvas(self.root,
                              width=self.width,
                              height=self.height)
@@ -81,7 +85,7 @@ class App:
     def initialiseSerial(self):
         for port in COM_PORT:
             try:
-                self.ser = serial.Serial(port, BAUD_RATE, timeout=0.01)
+                self.ser = serial.Serial(port, BAUD_RATE, timeout=TIME_OUT)
                 print "Connected to", port
                 break
             except:
@@ -227,6 +231,9 @@ class App:
                 print "Arduino is busy"
         else:
             print "Arduino is not connected"
+
+    def checkReady(self):
+        self.probeArduino()
 
     def changeMode(self):
         self.grid_map.erase_mode = not self.grid_map.erase_mode
