@@ -164,9 +164,11 @@ class App:
 
     def checkIfClosedSurface(self):
         self.surface = Surface(self.grid_map)
-        if self.surface.isClosedSurface():
-            self.surface.fillSurface()
-            self.updateCanvas()
+        self.surface.fillSurface()
+        self.updateCanvas()
+        #if self.surface.isClosedSurface():
+            #self.surface.fillSurface()
+            #self.updateCanvas()
 
     def reset(self):
         self.createGrids(GRID_COUNT)

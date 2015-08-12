@@ -27,7 +27,7 @@ class Grid:
         self.state = 'c'
 
     def isPrintable(self):
-        return self.state != 'c'
+        return self.state == 'o'
 
     def surroundingGrids(self):
         x, y = self.grid_coord
@@ -64,6 +64,11 @@ class GridMap:
                 if grid.isOccupied():
                     coords.append(grid.gridCoord())
         return coords
+
+    def resetComplement(self):
+        for grid in self.allGrids():
+            if grid.state == 'c':
+                grid.clear()
 
     def pixelToGridCoord(self, coord):
         return coord[0] / self.grid_size, coord[1] / self.grid_size
@@ -184,9 +189,14 @@ class Surface:
             
         return True
 
+    #def fillSurface(self):
+        #for grid_coord in self.complement_grids:
+            #self.grid_map.grid(*grid_coord).complement()
+
     def fillSurface(self):
-        for grid_coord in self.complement_grids:
-            self.grid_map.grid(*grid_coord).complement()
+        for grid in self.grid_map.allGrids():
+            if grid.gridCoord() not in self.complement_grids:
+                grid.occupy()
 
     def getGridForPrinting(self):
         grids = self.grid_map.grids
