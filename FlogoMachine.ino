@@ -411,6 +411,9 @@ void loop() {
                 Serial.println("ready");
         }
     }
+    else if (shutter.isReady())
+        // Clears the output pin all the time as long as machine is supposed to be idle
+        clearRegister(REGISTER_COUNT);
 }
 
 void clearRegister(const byte& register_count) {
