@@ -37,15 +37,16 @@ public:
     byte physicalToGUIMotorIndex(const byte);
     void populateRegister();
     void populateRegisterForClosing();
-    void populateRegisterForReset();
+    void populateRegisterForOpening();
     bool hasRemainingSteps();
     unsigned long getRemainingStepsVerbose();
     void moveMotor();
     void beginShutter();
     void closeShutter();
-    void resetShutter();
+    void openShutter();
     void hardReset();
     void forceOpen();
+    void forceClose();
     byte getRegisterValue(const byte);
     void updateRegisterValue(const byte);
     bool isReady();
@@ -215,7 +216,7 @@ void Shutter::populateRegisterForClosing() {
  */
 }
 
-void Shutter::populateRegisterForReset() {
+void Shutter::populateRegisterForOpening() {
     for (byte i = 0; i != register_count; ++i) {
         for (byte j = 0; j != 2; ++j) 
             reg[i].motor[j].target_position = 0;
@@ -238,16 +239,16 @@ void Shutter::beginShutter() {
     Serial.println("ready");
 }
 
-void Shutter::resetShutter() {
+void Shutter::openShutter() {
     is_ready = false;
-    populateRegisterForReset();
+    populateRegisterForOpening();
     for (byte i = 0; i != register_count; ++i) {
         for (byte j = 0; j != 2; ++j) {
             reg[i].motor[j].dir = -1;
             reg[i].motor[j].val = 1;
         }
     }
-    Serial.println("resetShutter");
+    Serial.println("openShutter");
     moveMotor();
     clearRegister(REGISTER_COUNT);
     is_ready = true;
@@ -432,7 +433,7 @@ void loop() {
             shutter.populateRegister();
             shutter.beginShutter();
         } else if (serial_read == 'O') {
-            shutter.resetShutter();
+            shutter.openShutter();
         } else if (serial_read == 'C') {
             shutter.closeShutter();
         } else if (serial_read == 'H') {
