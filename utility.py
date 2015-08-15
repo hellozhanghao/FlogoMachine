@@ -90,9 +90,7 @@ class Surface:
         self.is_closed = self.isClosedSurface()
 
     def isValidShape(self):
-        if self.hasOnlyOneFilledSurface():
-            return self.isVerticallyConvexedSurface() or self.isHorizontallyConvexedSurface()
-        return False
+        return self.isVerticallyConvexedSurface() or self.isHorizontallyConvexedSurface()
 
     def isClosedSurface(self):
         total_grid_count = self.grid_map.grid_count**2
