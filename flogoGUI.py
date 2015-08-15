@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from Tkinter import *
+import tkFileDialog
+from PIL import Image, ImageTk
 from utility import *
 import serial
 import sys
@@ -27,7 +29,7 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title(self.title_text)
-        #self.root.geometry(self.getGeometry(self.width + 200, self.height))
+        self.root.geometry(self.getGeometry(self.width + 160, self.height))
 
 
         self.help_lbl = Label(self.root, text="Draw on the grids. Once it is a closed surface, press Print!", justify=CENTER, wraplength=80)
@@ -62,6 +64,9 @@ class App:
 
         self.check_ready_btn = Button(self.root, text="Check readiness\n查Arduino", command=self.checkReady)
         self.check_ready_btn.grid(row=10, column=0)
+
+        self.load_image_btn = Button(self.root, text="Load image\n开图片", command=self.loadImage)
+        self.load_image_btn.grid(row=11, column=0)
 
         self.canvas = Canvas(self.root,
                              width=self.width,
@@ -236,6 +241,29 @@ class App:
 
     def checkReady(self):
         self.probeArduino()
+
+    def loadImage(self):
+        self.test = tkFileDialog.askopenfile()
+        self.image_test = ImageTk.PhotoImage(Image.open(self.test.name).resize((self.width, self.height), Image.ANTIALIAS)) # <-- here
+        
+        self.toplevel = Toplevel(self.root,
+                             width=self.width,
+                             height=self.height)
+        self.toplevel.wait_visibility(self.toplevel)
+        self.toplevel.wm_attributes("-alpha", 0.5)
+        self.toplevel.wm_attributes("-topmost", 1)
+        
+        self.toplevel_canvas = Canvas(self.toplevel,
+                                 width=self.width,
+                                 height=self.height)
+
+        self.toplevel_canvas.pack()
+
+        self.toplevel_canvas.bind('<Motion>', self.motion)
+        self.toplevel_canvas.bind('<Button-1>', self.mouseDown)
+        self.toplevel_canvas.bind('<ButtonRelease-1>', self.mouseUp)
+
+        self.toplevel_image = self.toplevel_canvas.create_image(0, 0, image=self.image_test, anchor=N+W)
 
     def changeMode(self):
         self.grid_map.erase_mode = not self.grid_map.erase_mode
