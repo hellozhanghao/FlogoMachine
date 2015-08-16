@@ -25,11 +25,12 @@ sys.setrecursionlimit(3500)
 class App:
     width = 800
     height = 800
+    excess_width = 142
     title_text = "{}Floating Logo!{}".format(45 * ' ', 45 * ' ')
     def __init__(self, root):
         self.root = root
         self.root.title(self.title_text)
-        self.root.geometry(self.getGeometry(self.width + 160, self.height))
+        self.root.geometry(self.getGeometry(self.width + self.excess_width, self.height))
 
 
         self.help_lbl = Label(self.root, text="Draw on the grids. Once it is a closed surface, press Print!", justify=CENTER, wraplength=80)
@@ -84,6 +85,8 @@ class App:
         self.ser = None
         self.serial_msg = None
         self.initialiseSerial()
+
+        self.toplevel = None
 
         self.eventLoop()
 
@@ -243,16 +246,39 @@ class App:
         self.probeArduino()
 
     def loadImage(self):
-        self.test = tkFileDialog.askopenfile()
-        self.image_test = ImageTk.PhotoImage(Image.open(self.test.name).resize((self.width, self.height), Image.ANTIALIAS)) # <-- here
+        if self.toplevel is not None:
+            self.toplevel.withdraw()
+
+        try:
+            image_file = tkFileDialog.askopenfile()
+            self.image_handle = ImageTk.PhotoImage(Image.open(image_file.name).resize((self.width, self.height), Image.ANTIALIAS))
+
+            if self.toplevel is not None:
+                self.toplevel.destroy()
+            self.setupOverlayingWindow()
+        except:
+            if image_file is not None:
+                print "Invalid image"
+
+        if self.toplevel is not None:
+            self.toplevel.deiconify()
         
+    def setupOverlayingWindow(self):
         self.toplevel = Toplevel(self.root,
                              width=self.width,
                              height=self.height)
+
+        self.toplevel.title("Press the X >> to close the loaded image")
+
+        self.toplevel.geometry('{}x{}+{}+{}'.format(self.width,
+                                                    self.height,
+                                                    self.root.winfo_x() + self.excess_width,
+                                                    self.root.winfo_y()))
+        
         self.toplevel.wait_visibility(self.toplevel)
         self.toplevel.wm_attributes("-alpha", 0.5)
         self.toplevel.wm_attributes("-topmost", 1)
-        
+
         self.toplevel_canvas = Canvas(self.toplevel,
                                  width=self.width,
                                  height=self.height)
@@ -263,7 +289,7 @@ class App:
         self.toplevel_canvas.bind('<Button-1>', self.mouseDown)
         self.toplevel_canvas.bind('<ButtonRelease-1>', self.mouseUp)
 
-        self.toplevel_image = self.toplevel_canvas.create_image(0, 0, image=self.image_test, anchor=N+W)
+        self.toplevel_image = self.toplevel_canvas.create_image(0, 0, image=self.image_handle, anchor=N+W)
 
     def changeMode(self):
         self.grid_map.erase_mode = not self.grid_map.erase_mode
