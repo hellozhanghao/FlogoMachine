@@ -112,7 +112,10 @@ class App:
                 print self.serial_msg
 
     def eventLoop(self):
-        self.rotateTitle()
+        if self.toplevel is None:
+            self.rotateTitle()
+        else:
+            self.root.title("")
         self.printMsgFromArduino()
         self.root.after(100, self.eventLoop)
 
@@ -255,6 +258,7 @@ class App:
 
             if self.toplevel is not None:
                 self.toplevel.destroy()
+
             self.setupOverlayingWindow()
         except:
             if image_file is not None:
@@ -290,6 +294,12 @@ class App:
         self.toplevel_canvas.bind('<ButtonRelease-1>', self.mouseUp)
 
         self.toplevel_image = self.toplevel_canvas.create_image(0, 0, image=self.image_handle, anchor=N+W)
+
+        self.toplevel.protocol("WM_DELETE_WINDOW", self.toplevelDestroyed)
+
+    def toplevelDestroyed(self):
+        self.toplevel.destroy()
+        self.toplevel = None
 
     def changeMode(self):
         self.grid_map.erase_mode = not self.grid_map.erase_mode
