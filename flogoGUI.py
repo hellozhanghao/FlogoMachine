@@ -253,7 +253,7 @@ class App:
             self.toplevel.withdraw()
 
         try:
-            image_file = tkFileDialog.askopenfile()
+            image_file = tkFileDialog.askopenfile(initialdir="./sample pictures")
             self.image_handle = ImageTk.PhotoImage(Image.open(image_file.name).resize((self.width, self.height), Image.ANTIALIAS))
 
             if self.toplevel is not None:
