@@ -25,7 +25,7 @@ sys.setrecursionlimit(3500)
 class App:
     width = 800
     height = 800
-    excess_width = 142
+    excess_width = 116
     title_text = "{}Floating Logo!{}".format(45 * ' ', 45 * ' ')
     def __init__(self, root):
         self.root = root
@@ -36,7 +36,7 @@ class App:
         self.help_lbl = Label(self.root, text="Draw on the grids. Once it is a closed surface, press Print!", justify=CENTER, wraplength=80)
         self.help_lbl.grid(row=0, column=0)
 
-        self.mode_btn = Button(self.root, text="Erase\n擦掉", command=self.changeMode)
+        self.mode_btn = Button(self.root, text="Erase\n擦除", command=self.changeMode)
         self.mode_btn.grid(row=1, column=0)
 
         self.print_btn = Button(self.root, text="Print!\n打印", command=self.printFoam)
@@ -51,22 +51,22 @@ class App:
         self.close_shutter_btn = Button(self.root, text="Close shutters\n芝麻关门", command=self.closeShutter)
         self.close_shutter_btn.grid(row=5, column=0)
 
-        self.force_open_btn = Button(self.root, text="Force open shutters\n硬硬开门", command=self.forceOpen)
+        self.force_open_btn = Button(self.root, text="Force open shutters\n强制开门", command=self.forceOpen)
         self.force_open_btn.grid(row=6, column=0)
 
-        self.force_close_btn = Button(self.root, text="Force close shutters\n硬硬关门", command=self.forceClose)
+        self.force_close_btn = Button(self.root, text="Force close shutters\n强制关门", command=self.forceClose)
         self.force_close_btn.grid(row=7, column=0)
 
-        self.force_stop_btn = Button(self.root, text="Force shutters\nto stop\n硬硬停止", command=self.forceStop)
+        self.force_stop_btn = Button(self.root, text="Force shutters\nto stop\n停止", command=self.forceStop)
         self.force_stop_btn.grid(row=8, column=0)
 
-        self.hard_reset_btn = Button(self.root, text="Hard reset\nmachine\n硬硬重新", command=self.hardReset)
+        self.hard_reset_btn = Button(self.root, text="Hard reset\nmachine\n重置", command=self.hardReset)
         self.hard_reset_btn.grid(row=9, column=0)
 
-        self.check_ready_btn = Button(self.root, text="Check readiness\n查Arduino", command=self.checkReady)
+        self.check_ready_btn = Button(self.root, text="Check readiness\n检查Arduino", command=self.checkReady)
         self.check_ready_btn.grid(row=10, column=0)
 
-        self.load_image_btn = Button(self.root, text="Load image\n开图片", command=self.loadImage)
+        self.load_image_btn = Button(self.root, text="Load image\n打开图片", command=self.loadImage)
         self.load_image_btn.grid(row=11, column=0)
 
         self.canvas = Canvas(self.root,
